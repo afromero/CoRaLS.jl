@@ -16,16 +16,16 @@ if length(ARGS) != 8
 end
 
 # convert to Unitful quantities
-altitude = 5*parse(Float64, ARGS[1])km
-energyMult = parse(Float64, ARGS[2])
-ice_depth = parse(Float64, ARGS[3])m
-antNum = parse(Int, ARGS[4])
-trigNum = parse(Int, ARGS[5])
-angle = parse(Float64, ARGS[6])
-freqMin = parse(Float64, ARGS[7])MHz
-ntrials = 10^parse(Int, ARGS[8])
-ENERGY1 = 0.01 * energyMult * EeV
-ENERGY2 = 100 * energyMult * EeV
+altitude = 5*parse(Float64, ARGS[1])km    ## Altitude of detector above surface
+energyMult = parse(Float64, ARGS[2])      ## Scales up energy range (usually set to 1)
+ice_depth = parse(Float64, ARGS[3])m      ## Ice depth in meters
+antNum = parse(Int, ARGS[4])              ## Numer of Antennas
+trigNum = parse(Int, ARGS[5])             ## Number of triggering antennas required 
+angle = parse(Float64, ARGS[6])           ## Pointing angle from detector of antennas (-90 = straight down)
+freqMin = parse(Float64, ARGS[7])MHz      ## Lowest sensitive frequency (change based on antenna size)
+ntrials = 10^parse(Int, ARGS[8])          ## Number of trials for each energy bin to try
+ENERGY1 = 0.01 * energyMult * EeV         ## Lowest energy bin
+ENERGY2 = 100 * energyMult * EeV          ## Highest energy bin
 
 #–– Set up your run ––#
 region   = create_region("polar:south,-80,0.0557")
@@ -89,7 +89,7 @@ println("# Run on $timestamp")
 #println("d_spectra = ", d_spectra)
 #println("d_error   = ", d_error)
 #println("alt (km), ice_depth (m), r_count, r_err, d_count, d_err")
-println("Energy (EeV), Altitude (km), Ice Depth (m), Reflected Count, Reflected Error, Direct Count, Direct Error")
+println("Energy (EeV), Altitude (km), Ice Depth (m), Angle (deg), Reflected Count, Reflected Error, Direct Count, Direct Error")
 for i in 1:length(r_spectra)
-    println(ustrip(A.energies[i]), ", ", ustrip(altitude), ", ", ustrip(ice_depth), ", ", r_spectra[i], ", ", r_error[i], ", ", d_spectra[i], ", ", d_error[i])
+    println(ustrip(A.energies[i]), ", ", ustrip(altitude), ", ", ustrip(ice_depth), ", ", ustrip(angle), ", ", r_spectra[i], ", ", r_error[i], ", ", d_spectra[i], ", ", d_error[i])
 end
