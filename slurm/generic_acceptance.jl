@@ -2,7 +2,7 @@
 
 import Pkg
 # Activate the CoRaLS.jl project
-Pkg.activate("CoRaLS.jl")    # adjust if your script lives elsewhere
+Pkg.activate("/users/PAS0654/machtay1/CoRaLS/main/CoRaLS.jl")    # adjust if your script lives elsewhere
 
 using CoRaLS
 using Unitful: km, m, sr, EeV, MHz
@@ -59,11 +59,13 @@ A = acceptance(ntrials, nbins;
     trigger=trigger,
     ice_depth=ice_depth,
     ice_thickness=1.0m,
-    Nice=1.483, ##regolith_index(StrangwayIndex(), ice_depth), ## Peter on call (Sept. 11, 2025) said ice permittivity should be 2.2
-    Nbed=regolith_index(StrangwayIndex(), ice_depth), # For bedrock: use Nbed=2.56, this is based on anorthosite P. Linton uses for rocks in volume scattering sims
+    Nice=1.350, 
+    #Nice=1.483, 
+    #Nice=regolith_index(StrangwayIndex(), ice_depth), ## Peter on call (Sept. 11, 2025) said ice permittivity should be 2.2
+    #Nbed=regolith_index(StrangwayIndex(), ice_depth), # For bedrock: use Nbed=2.56, this is based on anorthosite P. Linton uses for rocks in volume scattering sims
     kws...,
     indexmodel=StrangwayIndex(), # MACHTAY try this for changing index of refraction,
-    densitymodel=StrangwayDensity(),
+    #densitymodel=StrangwayDensity(),
     #indexmodel=ConstantIndex(), # MACHTAY try this for changing index of refraction
 )
 
