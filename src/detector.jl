@@ -143,14 +143,14 @@ function create_antenna(fname;
                 Vproj = view - (view ⋅ Haxis[i]) * Haxis[i]
 
                 # the angle between `Vproj` and boresight is the elevation angle
-                θev = acos((Vproj / norm(Vproj)) ⋅ boresight[i]) |> rad2deg
+                θev = acos(clamp((Vproj / norm(Vproj)) ⋅ boresight[i], -1, 1)) |> rad2deg
 
                 # project the view vector onto the plane defined by Vaxis
                 # i.e. the horizontal plane centered at the boresight
                 Hproj = view - (view ⋅ Vaxis[i]) * Vaxis[i]
 
                 # the angle between `Hproj` and boresight is the azimuth angle
-                ϕev = acos((Hproj / norm(Hproj)) ⋅ boresight[i]) |> rad2deg
+                ϕev = acos(clamp((Hproj / norm(Hproj)) ⋅ boresight[i], -1, 1)) |> rad2deg
 
                 # apply the off-axis antenna response at these angles
                 scale[i] *= 0.074 + (1.0 - 0.074)exp(-θev * θev / (2σθ * σθ))
