@@ -63,11 +63,14 @@ using StatsBase
         inv_hist = fit(Histogram, ustrip.(inv_sample), bin_edges)
         inv_sq_hist = fit(Histogram, ustrip.(inv_sq_sample), bin_edges)
 
-        inv_chi2 = sum((y_inv .- inv_hist.weights) .^ 2 ./ y_inv) / nbins
-        inv_sq_chi2 = sum((y_inv_sq .- inv_sq_hist.weights) .^ 2 ./ y_inv_sq) / nbins
+        ## We need to normalize and check per bin
+        inv_norm = inv_hist.weights ./ sum(inv_hist.weights)
+        inv_sq_norm = inv_sq_hist.weights ./ sum(inv_sq_hist.weights)
+        y_inv_norm = y_inv ./ sum(y_inv)
+        y_inv_sq_nrom = y_inv_sq ./ sum(y_inv_sq)
 
-        @test inv_chi2 ≈ 1 rtol = 0.05
-        @test inv_sq_chi2 ≈ 1 rtol = 0.05
+        @test inv_norm ≈ y_inv_norm rtol = 0.05
+        @test inv_sq_norm ≈ y_inv_sq_norm rtol = 0.05
     end
 
 
