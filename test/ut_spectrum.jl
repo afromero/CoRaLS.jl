@@ -1,3 +1,4 @@
+using StatsBase
 @testset verbose = true "spectrum.jl" begin
     @testset "Test auger_spectrum_2021 flux" begin
         # Raw counts from Table 10 of Auger 2021 paper
@@ -42,5 +43,33 @@
         # 5% tolerance, some offset probably due to Jraw -> J conversion
         @test count ≈ raw_count rtol = 0.05  
     end
+
+    @testset "Test sample_power_law flux" begin
+        import Random; Random.seed!(42)
+
+        nbins = 100
+        samples = 10 ^6
+
+        bin_edges = range(1.0, 1001.0, length = nbins+1)
+        bin_centers = (bin_edges[1:end-1] .+ bin_edges[2:end]) ./ 2 ## Need centers to compare to points
+
+        y_inv =  ((bin_centers .^ (-1)) ./ log(1001/1)) .* samples .* (1001 - 1) ./ nbins ## range is 1 - 1001
+        y_inv_sq = ((bin_centers .^ (-2)) .* 1001/1000) .* samples .* (1001 - 1) ./ nbins
+
+        inv_sample = sample_power_law(-1.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+        inv_sq_sample = sample_power_law(-2.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+
+        ## Now we need to histogram the samples
+        inv_hist = fit(Histogram, ustrip.(inv_sample), bin_edges)
+        inv_sq_hist = fit(Histogram, ustrip.(inv_sq_sample), bin_edges)
+
+        inv_chi2 = sum((y_inv .- inv_hist.weights) .^ 2 ./ y_inv) / nbins
+        inv_sq_chi2 = sum((y_inv_sq .- inv_sq_hist.weights) .^ 2 ./ y_inv_sq) / nbins
+
+        @test inv_chi2 ≈ 1 rtol = 0.05
+        @test inv_sq_chi2 ≈ 1 rtol = 0.05
+    end
+
+
 end
 ;
