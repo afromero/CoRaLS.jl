@@ -12,7 +12,7 @@ export FixedPlatform, CircularOrbit, SampledPositions, create_spacecraft, get_po
 export random_point_in_aoi, aoi_to_spherical_bounds, is_in_aoi, is_in_region
 
 # exports from spectrum.jl
-export auger_spectrum_2021, auger_spectrum_2020, auger_spectrum, sample_auger, yr, cr_spectrum
+export auger_spectrum_2021, auger_spectrum_2020, auger_spectrum, sample_auger, yr, cr_spectrum, sample_power_law
 
 # exports from utils.jl
 export rician, polarization_angle, retrigger
