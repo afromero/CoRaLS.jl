@@ -1,3 +1,9 @@
+using CoRaLS: sample_power_law 
+using CoRaLS: sample_auger_2020 
+using CoRaLS: sample_auger_2021 
+using PyPlot
+using Unitful: g, cm, m, km, sr, μV, V, eV, GeV, EeV, Hz, MHz, W, K, NoUnits
+
 @testset verbose = true "spectrum.jl" begin
     @testset "Test auger_spectrum_2021 flux" begin
         # Raw counts from Table 10 of Auger 2021 paper
@@ -45,11 +51,6 @@
 
     @testset "Test sample_power_law flux" begin
         import Random; Random.seed!(42)
-        using CoRaLS: sample_power_law 
-        using CoRaLS: sample_auger_2020 
-        using CoRaLS: sample_auger_2021 
-        using PyPlot
-        using Unitful: g, cm, m, km, sr, μV, V, eV, GeV, EeV, Hz, MHz, W, K, NoUnits
 
         nbins = 100
         samples = 10^6
