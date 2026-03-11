@@ -1,8 +1,8 @@
 using CoRaLS: sample_power_law 
-using CoRaLS: sample_auger_2020 
-using CoRaLS: sample_auger_2021 
-using PyPlot
-using Unitful: g, cm, m, km, sr, μV, V, eV, GeV, EeV, Hz, MHz, W, K, NoUnits
+using CoRaLS: auger_spectrum_2020 
+using CoRaLS: auger_spectrum_2021 
+using Unitful: g, cm, m, km, sr, μV, V, eV, GeV, EeV, Hz, MHz, W, K, NoUnits, yr, ustrip
+using Plots
 
 @testset verbose = true "spectrum.jl" begin
     @testset "Test auger_spectrum_2021 flux" begin
