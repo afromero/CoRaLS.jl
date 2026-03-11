@@ -50,7 +50,7 @@ function sample_power_law(gamma, N; min_value=1.0EeV, max_value=1000.0EeV)
 
     else
 
-        return ((max_value^g1 - min_value^g1) .* y + min_value^g1).^(1.0 / g1)
+        return ((max_value^g1 - min_value^g1) .* y .+ min_value^g1).^(1.0 / g1)
 
     end
 
