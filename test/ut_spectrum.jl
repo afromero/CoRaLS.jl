@@ -68,10 +68,10 @@ using Plots
         ## Make some plots
         p1 = histogram(ustrip.(inv_sample), bins=collect(bin_edges), yscale=:log10,
                        label="samples", title="gamma = -1", xlabel="x", ylabel="counts")
-        savefig(plot(p1, layout=(1,2), size=(1000,400)), "plots/sample_E_-1_power_law_flux.png")
+        savefig(p1, "plots/figs/sample_E_-1_power_law_flux.png")
         p2 = histogram(ustrip.(inv_sq_sample), bins=collect(bin_edges), yscale=:log10,
                        label="samples", title="gamma = -2", xlabel="x", ylabel="counts")
-        savefig(plot(p2, layout=(1,2), size=(1000,400)), "plots/sample_E_-2_power_law_flux.png")
+        savefig(p2, "plots/figs/sample_E_-2_power_law_flux.png")
 
         ## For now, this test just makes the plots and we'll implement a more sophisticated on later
         @test 1 == 1
