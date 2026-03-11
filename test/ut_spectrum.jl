@@ -1,4 +1,3 @@
-using StatsBase
 using CoRaLS : sample_power_law 
 @testset verbose = true "spectrum.jl" begin
     @testset "Test auger_spectrum_2021 flux" begin
@@ -61,17 +60,13 @@ using CoRaLS : sample_power_law
         inv_sample    = sample_power_law(-1.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
         inv_sq_sample = sample_power_law(-2.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
         
-        inv_hist    = fit(Histogram, ustrip.(inv_sample),    bin_edges)
-        inv_sq_hist = fit(Histogram, ustrip.(inv_sq_sample), bin_edges)
-
         ## Make some plots
         p1 = histogram(ustrip.(inv_sample), bins=collect(bin_edges), yscale=:log10,
                        label="samples", title="gamma = -1", xlabel="x", ylabel="counts")
-        plot!(p1, bin_centers, y_inv, linewidth=2, label="analytic")
+        savefig(plot(p1, layout=(1,2), size=(1000,400)), "plots/sample_E_-1_power_law_flux.png")
         p2 = histogram(ustrip.(inv_sq_sample), bins=collect(bin_edges), yscale=:log10,
                        label="samples", title="gamma = -2", xlabel="x", ylabel="counts")
-        plot!(p2, bin_centers, y_inv_sq, linewidth=2, label="analytic")
-        savefig(plot(p1, p2, layout=(1,2), size=(1000,400)), "plots/sample_power_law_flux.png")
+        savefig(plot(p2, layout=(1,2), size=(1000,400)), "plots/sample_E_-2_power_law_flux.png")
 
         ## For now, this test just makes the plots and we'll implement a more sophisticated on later
         @test 1 == 1
