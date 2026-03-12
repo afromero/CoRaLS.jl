@@ -265,7 +265,11 @@ Calculates the differential spectrum of detected UHECR events .
 function differential_spectrum(energies, AΩ, T)
 
     # array to store the spectrum in each bin
+    # ## Added the below three lines for testing
     spectrum = zeros(length(AΩ))
+    logE = log10.(ustrip.(energies))
+    ΔlogE = mean(diff(logE))
+    @assert isapprox.(dif(logE), ΔlogE; rtol = 1e-6) |> all
 
     # loop over each bin
     for bin = 1:(length(energies)-1)
