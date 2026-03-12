@@ -73,7 +73,7 @@ function acceptance(ntrials::Int, nbins::Int;
             for i = 1:ntrials
                 # throw a random cosmic ray trial and get the signal at the payload
                 direct, reflected = throw_cosmicray(
-                    sample_auger(energies[bin], energies[bin+1]), 
+                    energies[bin], ## Use a single monoenergy--apply spectrum at the end
                     trigger, region, spacecraft; simple_area=simple_area, kwargs...)
                 if direct isa TrialFailed
                     dfailed[bin, Int(direct)] += 1
