@@ -269,7 +269,7 @@ function differential_spectrum(energies, AΩ, T)
     spectrum = zeros(length(AΩ))
     logE = log10.(ustrip.(energies))
     ΔlogE = mean(diff(logE))
-    @assert isapprox.(dif(logE), ΔlogE; rtol = 1e-6) |> all
+    @assert isapprox.(diff(logE), ΔlogE; rtol = 1e-6) |> all
 
     # loop over each bin
     for bin = 1:(length(energies)-1)
