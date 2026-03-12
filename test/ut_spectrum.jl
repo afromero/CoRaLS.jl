@@ -64,6 +64,7 @@ using Plots
         ## Sample from the functions and then histogam them
         inv_sample    = sample_power_law(-1.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
         inv_sq_sample = sample_power_law(-2.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+        mkpath("plots/figs")
         
         ## Make some plots
         p1 = histogram(ustrip.(inv_sample), bins=collect(bin_edges), yscale=:log10,
