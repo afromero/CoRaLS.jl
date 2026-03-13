@@ -1,10 +1,8 @@
 using PyPlot
-using Statistics
-using Printf
-using Dates
 
 const REPO_ROOT = normpath(joinpath(@__DIR__, "..", ".."))
 const PLOTS_SUBDIR = "test/plots/test_plots"
+const TMP_WARN_BYTES = 100 * 1024 * 1024
 
 """
     changed_plot_paths(repo_root)::Vector{String}
@@ -49,7 +47,7 @@ function image_rmse(path_a::AbstractString, path_b::AbstractString)::Float64
     size(img_a) == size(img_b) || return Inf
 
     diff = Float64.(img_a) .- Float64.(img_b)
-    return sqrt(mean(diff .^ 2))
+    return sqrt(sum(diff .^ 2) / length(diff))
 end
 
 """
@@ -103,7 +101,7 @@ Create a run-specific temporary folder under repo_root/tmp for visual comparison
 artifacts.
 """
 function create_compare_dir(repo_root::AbstractString)::String
-    ts = Dates.format(now(), "yyyymmdd_HHMMSS")
+    ts = string(time_ns())
     compare_dir = joinpath(repo_root, "tmp", "plot_visual_compare_$(ts)")
     mkpath(joinpath(compare_dir, "head"))
     mkpath(joinpath(compare_dir, "current"))
@@ -128,9 +126,46 @@ function export_compare_pair(path::AbstractString, compare_dir::AbstractString):
     return write_head_version(REPO_ROOT, rel, head_out)
 end
 
+"""
+    dir_size_bytes(path)::Int64
+
+Recursively compute total size in bytes for regular files under path.
+"""
+function dir_size_bytes(path::AbstractString)::Int64
+    isdir(path) || return 0
+
+    total = Int64(0)
+    for (root, _, files) in walkdir(path)
+        for file in files
+            fpath = joinpath(root, file)
+            if isfile(fpath)
+                total += filesize(fpath)
+            end
+        end
+    end
+    return total
+end
+
+"""
+    maybe_warn_tmp_size(repo_root)
+
+Print a warning if repo_root/tmp exceeds TMP_WARN_BYTES.
+"""
+function maybe_warn_tmp_size(repo_root::AbstractString)
+    tmp_path = joinpath(repo_root, "tmp")
+    tmp_bytes = dir_size_bytes(tmp_path)
+    if tmp_bytes > TMP_WARN_BYTES
+        tmp_mb = round(tmp_bytes / (1024 * 1024); digits=1)
+        warn_mb = round(TMP_WARN_BYTES / (1024 * 1024); digits=1)
+        println("\nWARNING: tmp directory is $(tmp_mb) MB (> $(warn_mb) MB).")
+        println("CoRaLS tests may not have garbage collected in a while; consider deleting $(tmp_path).")
+    end
+end
+
 function main(args::Vector{String})
     threshold = parse_threshold(args)
     changed = changed_plot_paths(REPO_ROOT)
+    maybe_warn_tmp_size(REPO_ROOT)
 
     if isempty(changed)
         println("No changed plot PNGs found under $(PLOTS_SUBDIR).")
@@ -151,7 +186,7 @@ function main(args::Vector{String})
 
         if was_restored
             push!(restored, rel)
-            @printf("RESTORED  %s  (rmse=%.3e)\n", rel, rmse)
+            println("RESTORED  $(rel)  (rmse=$(rmse))")
         else
             push!(kept, rel)
             if isempty(compare_dir)
@@ -160,7 +195,7 @@ function main(args::Vector{String})
             has_head = export_compare_pair(path, compare_dir)
             exported_pairs += has_head ? 1 : 0
             if isfinite(rmse)
-                @printf("CHANGED   %s  (rmse=%.3e)\n", rel, rmse)
+                println("CHANGED   $(rel)  (rmse=$(rmse))")
             else
                 println("CHANGED   $(rel)  (new file or different image shape)")
             end
