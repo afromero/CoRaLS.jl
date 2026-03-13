@@ -2,6 +2,7 @@ using CoRaLS
 using PyPlot
 using Unitful
 using Unitful: EeV, eV, km, sr, yr, ustrip
+using Random
 using Test
 
 function plot_auger_2021_comparison()
@@ -40,7 +41,7 @@ function plot_auger_2021_comparison()
     axs.set_xlim(5e16, 5e20)
     axs.set_ylim(1e-26, 1e-12)
     axs.legend()
-    fig.savefig("$(@__DIR__)/../figs/auger21_comparison.png")
+    fig.savefig("$(@__DIR__)/test_plots/auger21_comparison.png")
 
     @test J_auger ≈ J_expected rtol = 0.025  # 13% offset
 
@@ -96,8 +97,54 @@ function plot_auger_2020_comparison()
     axs[2].set_xlim(1.5e18, 2e20)
     axs[2].set_ylim(5e-1, 1e6)
     axs[2].legend()
-    fig.savefig("$(@__DIR__)/../figs/auger20_comparison.png")
+    fig.savefig("$(@__DIR__)/test_plots/auger20_comparison.png")
 end
 
-# plot_auger_2020_comparison()
-plot_auger_2021_comparison()
+function plot_sample_power_law()
+    Random.seed!(42)
+
+    nbins = 100
+    samples = 10^6
+    bin_edges = range(1.0, 1001.0, length = nbins+1)
+    bin_centers = (bin_edges[1:end-1] .+ bin_edges[2:end]) ./ 2
+
+    ## Define the functions
+    y_inv    = ((bin_centers .^ (-1)) ./ log(1001/1)) .* samples .* (1001 - 1) ./ nbins
+    y_inv_sq = ((bin_centers .^ (-2)) .* 1001/1000)   .* samples .* (1001 - 1) ./ nbins
+
+    ## Sample from the functions and then histogam them
+    inv_sample    = sample_power_law(-1.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+    inv_sq_sample = sample_power_law(-2.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+    
+    ## Make some plots
+    fig1, ax1 = plt.subplots(1, 1, figsize=(8, 6))
+    ax1.hist(ustrip.(inv_sample), bins=collect(bin_edges), label="samples")
+    ax1.set_yscale("log")
+    ax1.set_title("gamma = -1")
+    ax1.set_xlabel("x")
+    ax1.set_ylabel("counts")
+    ax1.legend()
+    fig1.savefig("$(@__DIR__)/test_plots/sample_E_-1_power_law_flux.png")
+    close(fig1)
+
+    fig2, ax2 = plt.subplots(1, 1, figsize=(8, 6))
+    ax2.hist(ustrip.(inv_sq_sample), bins=collect(bin_edges), label="samples")
+    ax2.set_yscale("log")
+    ax2.set_title("gamma = -2")
+    ax2.set_xlabel("x")
+    ax2.set_ylabel("counts")
+    ax2.legend()
+    fig2.savefig("$(@__DIR__)/test_plots/sample_E_-2_power_law_flux.png")
+    close(fig2)
+
+    ## For now, this test just makes the plots and we'll implement a more sophisticated on later
+    @test 1 == 1
+end
+
+@testset "Test spectrum.jl plots" begin
+    plot_auger_2020_comparison()
+    plot_auger_2021_comparison()
+    plot_sample_power_law()
+
+    @test 1 == 1  # Finished with no errors
+end

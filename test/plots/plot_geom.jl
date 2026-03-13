@@ -7,11 +7,11 @@ using Random
 
 Random.seed!(20250210)
 
-function spherical_to_cartesian(theta, phi, r)
-    return (r * [sin(theta) * cos(phi),
-        sin(theta) * sin(phi),
-        cos(theta)])
-end
+# function spherical_to_cartesian(theta, phi, r)
+#     return (r * [sin(theta) * cos(phi),
+#         sin(theta) * sin(phi),
+#         cos(theta)])
+# end
 
 function plot_orbit_sampling()
 
@@ -39,7 +39,7 @@ function plot_orbit_sampling()
     ax.set_zlim([-1,1])
     ax.set_aspect("equal")
     plt.tight_layout()
-    fig.savefig("$(@__DIR__)/../figs/orbit_sampled.png")
+    fig.savefig("$(@__DIR__)/test_plots/orbit_sampled.png")
 end
 
 
@@ -62,7 +62,7 @@ function plot_orbit_circular()
     _ = [ax.scatter(sc..., color="k", s=20, alpha=0.5) for sc in SCs]
     ax.set_aspect("equal")
     plt.tight_layout()
-    fig.savefig("$(@__DIR__)/../figs/orbit_circular.png")
+    fig.savefig("$(@__DIR__)/test_plots/orbit_circular.png")
 end
 
 function plot_orbit_elliptical()
@@ -101,7 +101,7 @@ function plot_orbit_elliptical()
     ax.set_aspect("equal")
 
     plt.tight_layout()
-    fig.savefig("$(@__DIR__)/../figs/orbit_elliptical.png")
+    fig.savefig("$(@__DIR__)/test_plots/orbit_elliptical.png")
 end
 
 
@@ -127,10 +127,15 @@ function plot_spherical_sampling()
     ax.set_zlim([-1,1])
     ax.set_aspect("equal")
     plt.tight_layout()
-    fig.savefig("$(@__DIR__)/../figs/spherical_sampling.png")
+    fig.savefig("$(@__DIR__)/test_plots/spherical_sampling.png")
 
 end
-plot_orbit_sampling()
-plot_orbit_circular()
-plot_orbit_elliptical()
-plot_spherical_sampling()
+
+@testset "Test geometry plots" begin
+
+    plot_orbit_sampling()
+    plot_orbit_circular()
+    plot_orbit_elliptical()
+    plot_spherical_sampling()
+    @test 1 == 1  # Finished with no errors
+end

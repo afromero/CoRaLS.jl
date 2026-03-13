@@ -4,7 +4,7 @@ using Random
 using PyPlot
 
 function plot_ice_depth(ntrials=1000, nbins=7, ice_depths=[1, 5, 10, 100]m)
-    figname = "$(@__DIR__)/../figs/ice_depth_experiment.png"
+    figname = "$(@__DIR__)/test_plots/ice_depth_experiment.png"
     region = create_region("polar:south,-80,0.0557")
     altitude = 10km
     title="Spole PSR detections\naltitude=$(altitude) (4 nadir 0.3-1GHz)"
@@ -21,13 +21,13 @@ function plot_ice_depth(ntrials=1000, nbins=7, ice_depths=[1, 5, 10, 100]m)
         push!(A_arr, A)
     end
 
-    fig, ax = plot_rate_experiment(A_arr, ice_depth; xlabel="Altitude [km]")
+    fig, ax = plot_rate_experiment(A_arr, ice_depths; xlabel="Altitude [km]")
     ax.set_title(title)
     fig.savefig(figname)
 end
 
 function plot_altitudes(ntrials=1000, nbins=7, altitudes=[1, 10, 50, 100, 500, 1000]km)
-    figname = "$(@__DIR__)/../figs/altitude_experiment.png"
+    figname = "$(@__DIR__)/test_plots/altitude_experiment.png"
     region = create_region("polar:south,-80,0.0557")
     ice_depth = 10.0m
     title="Spole PSR detections\nice_depth=$(ice_depth) (4 nadir 0.3-1GHz)"
@@ -54,8 +54,9 @@ end
 #  SNR: trigger rate at kHz with nano sec window
 function plot_detector_geoms(; verbose=false, from_dir="")
     # Setup params
-    figname = "$(@__DIR__)/../figs/detector_geom_comparison.png"
+    figname = "$(@__DIR__)/test_plots/detector_geom_comparison.png"
     savefile = "$(@__DIR__)/../../tmp/compare_geoms_$(rand(1:100000)).jld2"
+    mkpath(dirname(savefile))
     nbins = 7
     ntrials = 50000
     max_tries = 10000
@@ -78,7 +79,7 @@ function plot_detector_geoms(; verbose=false, from_dir="")
         end
     else
         # Run acceptance and collect events
-        region = AllPSR()
+        region = AllPSR
         sc = CircularOrbit(altitude)
         kws = Dict(:ice_depth=>6.0m, :min_energy=>3.0EeV, :max_energy=>200.0EeV,
                 :ν_min=>300MHz, :ν_max=>1000MHz, :region=>region, :spacecraft=>sc,
@@ -114,11 +115,12 @@ end
 
 function plot_detector_coaligned(;verbose=false)
     # Setup params
-    figname = "$(@__DIR__)/../figs/detector_coaligned.png"
+    figname = "$(@__DIR__)/test_plots/detector_coaligned.png"
     savefile = "$(@__DIR__)/../../tmp/compare_coaligned_$(rand(1:100000)).jld2"
+    mkpath(dirname(savefile))
     min_count = 20
     altitude = 50km
-    region = AllPSR()
+    region = AllPSR
     sc = CircularOrbit(altitude)
     kws = Dict(:ice_depth=>6.0m, :min_energy=>3.0EeV, :max_energy=>200.0EeV,
               :ν_min=>300MHz, :ν_max=>1000MHz, :region=>region, :spacecraft=>sc,
@@ -168,7 +170,10 @@ function plot_detector_coaligned(;verbose=false)
     fig.savefig(figname)
 end
 
-plot_ice_depth()
-# plot_altitudes();
-# plot_detector_geoms(; from_dir="/mnt/d/data/corals/")
-# plot_detector_coaligned()
+@testset "Test comparison plots" begin
+    plot_ice_depth()
+    plot_altitudes();
+    # plot_detector_geoms(; from_dir="/mnt/d/data/corals/")
+    plot_detector_coaligned()
+    @test 1 == 1  # Finished with no errors
+end
