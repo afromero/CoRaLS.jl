@@ -19,14 +19,8 @@ to convert a uniform deviate into a power law with a given exponent.
 """
 function sample_power_law(gamma; min_value=1.0EeV, max_value=1000.0EeV)
 
-    # get a uniform random sample on [0, 1]
-    y = rand()
-
-    # we need gamma+1. multiple times
-    g1 = gamma + 1
-
-    return ((max_value^g1 - min_value^g1) * y + min_value^g1)^(1.0 / g1)
-
+    return sample_power_law(gamma, 1; min_value = min_value, max_value = max_value)[1]
+    
 end
 
 """
@@ -50,7 +44,15 @@ function sample_power_law(gamma, N; min_value=1.0EeV, max_value=1000.0EeV)
     # we need gamma+1. multiple times
     g1 = gamma + 1
 
-    return ((max_value^g1 - min_value^g1) .* y .+ min_value^g1) .^ (1.0 / g1)
+    if (gamma == -1)
+
+        return (min_value * (max_value/min_value).^y)
+
+    else
+
+        return ((max_value^g1 - min_value^g1) .* y .+ min_value^g1).^(1.0 / g1)
+
+    end
 
 end
 
