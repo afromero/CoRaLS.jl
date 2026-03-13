@@ -15,3 +15,6 @@ using Test
     include("ut_spectrum.jl");
     include("ut_plots.jl");
 end
+
+# Cleanup plot outputs so only visually changed PNG files remain in git diff.
+include("plots/visual_diff_test_plots.jl")

@@ -5,15 +5,8 @@ using Test
 using LinearAlgebra
 using Random
 
-Random.seed!(20250210)
-
-# function spherical_to_cartesian(theta, phi, r)
-#     return (r * [sin(theta) * cos(phi),
-#         sin(theta) * sin(phi),
-#         cos(theta)])
-# end
-
 function plot_orbit_sampling()
+    Random.seed!(54265324)
 
     # Plot
     rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
@@ -44,6 +37,7 @@ end
 
 
 function plot_orbit_circular()
+    Random.seed!(54265325)
 
     # Plot
     rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
@@ -66,6 +60,7 @@ function plot_orbit_circular()
 end
 
 function plot_orbit_elliptical()
+    Random.seed!(54265326)
 
     # Plot
     rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
@@ -106,6 +101,7 @@ end
 
 
 function plot_spherical_sampling()
+    Random.seed!(54265327)
 
     # Plot
     rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")

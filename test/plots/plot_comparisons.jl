@@ -4,6 +4,7 @@ using Random
 using PyPlot
 
 function plot_ice_depth(ntrials=1000, nbins=7, ice_depths=[1, 5, 10, 100]m)
+    Random.seed!(54110001)
     figname = "$(@__DIR__)/test_plots/ice_depth_experiment.png"
     region = create_region("polar:south,-80,0.0557")
     altitude = 10km
@@ -27,6 +28,7 @@ function plot_ice_depth(ntrials=1000, nbins=7, ice_depths=[1, 5, 10, 100]m)
 end
 
 function plot_altitudes(ntrials=1000, nbins=7, altitudes=[1, 10, 50, 100, 500, 1000]km)
+    Random.seed!(54110002)
     figname = "$(@__DIR__)/test_plots/altitude_experiment.png"
     region = create_region("polar:south,-80,0.0557")
     ice_depth = 10.0m
@@ -53,9 +55,10 @@ end
 # Next: look as fuction of angle with co-aligned antennas
 #  SNR: trigger rate at kHz with nano sec window
 function plot_detector_geoms(; verbose=false, from_dir="")
+    Random.seed!(54110003)
     # Setup params
     figname = "$(@__DIR__)/test_plots/detector_geom_comparison.png"
-    savefile = "$(@__DIR__)/../../tmp/compare_geoms_$(rand(1:100000)).jld2"
+    savefile = "$(@__DIR__)/../../tmp/compare_geoms.jld2"
     mkpath(dirname(savefile))
     nbins = 7
     ntrials = 50000
@@ -114,9 +117,10 @@ function plot_detector_geoms(; verbose=false, from_dir="")
 end
 
 function plot_detector_coaligned(;verbose=false)
+    Random.seed!(54110004)
     # Setup params
     figname = "$(@__DIR__)/test_plots/detector_coaligned.png"
-    savefile = "$(@__DIR__)/../../tmp/compare_coaligned_$(rand(1:100000)).jld2"
+    savefile = "$(@__DIR__)/../../tmp/compare_coaligned.jld2"
     mkpath(dirname(savefile))
     min_count = 20
     altitude = 50km
