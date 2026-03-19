@@ -1,5 +1,7 @@
 using NPZ
 using Interpolations
+using CSV
+using DataFrames
 using Unitful: g, cm, m, C, MeV, GeV, V, MHz, NoUnits
 
 """
@@ -110,7 +112,7 @@ Calculate the integrated electric field at the payload using the ARW model. This
 function regolith_field(::ARW, Ecr, θ,
     Drego, Dvacuum;
     n=sqrt(3.0), ν_min=30.0MHz, ν_max=300.0MHz,
-    density=1.8g / cm^3, kwargs...)
+    density=1.8g / cm^3, satten=nothing, kwargs...)
 
     # TODO: Currently dν is fixed to 10 MHz by other parts of the code
     dν = 10MHz
@@ -149,7 +151,15 @@ function regolith_field(::ARW, Ecr, θ,
     factor = 1.1222 * Ecr / 100.0EeV / (Drego + Dvacuum)
     E = factor * ARW_RE(θactual, ν) * (1V / 1MHz)
     Latten = attenuation_length(ν, n, density; kwargs...)
+
     @. E *= exp(-Drego / Latten)
+
+    if (satten !== nothing)
+        @. E *= (satten(ustrip(ν)))^(Drego / m)
+    end
+    #@. E *= (satten.(ustrip.(ν)))^(Drego / m)
+
+
 
     return ν, E
 
@@ -302,7 +312,7 @@ Calculate the attenuation length for radio waves in regolith at given frequencie
 # Returns
 - Array of attenuation lengths corresponding to each frequency.
 """
-function attenuation_length(ν, n, density; tanδnorm=0.001, tand_mag=0.0, kwargs...)
+function attenuation_length(ν, n, density; tanδnorm=0.00025, tand_mag=0.0, kwargs...)
 
     ## Note from PL: 
     ## Lab lunar sample data at room temperature has submature highland 
