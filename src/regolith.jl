@@ -44,6 +44,11 @@ Diviner regolith index
 struct DivinerIndex <: RegolithIndex end
 
 """
+Combined Lunar Source Book + Diviner regolith index 
+"""
+struct LSB_DivinerIndex <: RegolithIndex end
+
+"""
 Lunar Source Book regolith index 
 """
 struct LunarSourceBookIndex <: RegolithIndex end
@@ -84,6 +89,8 @@ struct DivinerRadiDensity <: RegolithDensity end
 
 struct LunarSourceBookDensity <: RegolithDensity end
 
+struct LSB_Diviner_Density <: RegolithDensity end
+
 struct CE4LPRDensity_Dong2020 <: RegolithDensity end
 
 
@@ -115,6 +122,17 @@ function regolith_density(::DivinerRadiDensity, depth)
     rhod = 1.8g / cm^3
     rhos = 1.1g / cm^3
     H = 5cm
+    return rhod - (rhod - rhos) * exp(-depth/H)
+end
+
+
+function regolith_density(::LSB_Diviner_Density, depth)
+    # a sanity check for when this called outside the regolith
+    depth < 0.0m && return 0.0g / cm^3
+
+    rhod = 1.92g / cm^3
+    rhos = 1.1g / cm^3
+    H = 6cm
     return rhod - (rhod - rhos) * exp(-depth/H)
 end
 
@@ -363,6 +381,14 @@ end
 function regolith_index(::DivinerIndex, depth, low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(DivinerRadiDensity(), depth) / (g / cm^3)
+    K = low_temp_corr_factor*(1.93^ρ)
+
+    return sqrt(K)
+end
+
+function regolith_index(::LSB_DivinerIndex, depth, low_temp_corr_factor=0.9)
+    # get the density at this depth - we need this in g/cm^3
+    ρ = regolith_density(LSB_Diviner_Density(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
 
     return sqrt(K)
