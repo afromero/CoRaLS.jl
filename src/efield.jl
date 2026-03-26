@@ -50,6 +50,8 @@ The data file for the practical and accurate calculation.
 """
 const ARW_RE = load_ARW()
 
+const DEFAULT_SATTEN = linear_interpolation(CSV.read(joinpath(@__DIR__, "../data/CE4_Cuboid_Efield_linear_perm.csv"), DataFrame)[:, 1], CSV.read(joinpath(@__DIR__, "../data/CE4_Cuboid_Efield_linear_perm.csv"), DataFrame)[:, 2])
+
 """
 This type is the base for all instances of electric field models
 for the cosmic ray emission.
@@ -112,7 +114,7 @@ Calculate the integrated electric field at the payload using the ARW model. This
 function regolith_field(::ARW, Ecr, θ,
     Drego, Dvacuum;
     n=sqrt(3.0), ν_min=30.0MHz, ν_max=300.0MHz,
-    density=1.8g / cm^3, satten=nothing, kwargs...)
+    density=1.8g / cm^3, satten=DEFAULT_SATTEN, kwargs...)
 
     # TODO: Currently dν is fixed to 10 MHz by other parts of the code
     dν = 10MHz
@@ -312,7 +314,7 @@ Calculate the attenuation length for radio waves in regolith at given frequencie
 # Returns
 - Array of attenuation lengths corresponding to each frequency.
 """
-function attenuation_length(ν, n, density; tanδnorm=0.00025, tand_mag=0.0, kwargs...)
+function attenuation_length(ν, n, density; tanδnorm=0.00025, tand_mag=0.0005, kwargs...)
 
     ## Note from PL: 
     ## Lab lunar sample data at room temperature has submature highland 
