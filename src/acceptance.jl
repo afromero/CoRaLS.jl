@@ -73,7 +73,7 @@ function acceptance(ntrials::Int, nbins::Int;
             for i = 1:ntrials
                 # throw a random cosmic ray trial and get the signal at the payload
                 direct, reflected = throw_cosmicray(
-                    sample_auger(energies[bin], energies[bin+1]), 
+                    energies[bin], ## Use a single monoenergy--apply spectrum at the end
                     trigger, region, spacecraft; simple_area=simple_area, kwargs...)
                 if direct isa TrialFailed
                     dfailed[bin, Int(direct)] += 1
@@ -265,7 +265,11 @@ Calculates the differential spectrum of detected UHECR events .
 function differential_spectrum(energies, AΩ, T)
 
     # array to store the spectrum in each bin
+    # ## Added the below three lines for testing
     spectrum = zeros(length(AΩ))
+    logE = log10.(ustrip.(energies))
+    ΔlogE = mean(diff(logE))
+    @assert isapprox.(diff(logE), ΔlogE; rtol = 1e-6) |> all
 
     # loop over each bin
     for bin = 1:(length(energies)-1)
