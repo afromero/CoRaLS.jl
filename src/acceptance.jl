@@ -73,7 +73,8 @@ function acceptance(ntrials::Int, nbins::Int;
             for i = 1:ntrials
                 # throw a random cosmic ray trial and get the signal at the payload
                 direct, reflected = throw_cosmicray(
-                    sample_auger(energies[bin], energies[bin+1]), 
+                    #sample_auger(energies[bin], energies[bin+1]),
+                    energies[bin], 
                     trigger, region, spacecraft; simple_area=simple_area, kwargs...)
                 if direct isa TrialFailed
                     dfailed[bin, Int(direct)] += 1
@@ -108,6 +109,7 @@ function acceptance(ntrials::Int, nbins::Int;
         # We threw CRs only in the AOIRegion, so A_collected is that AOI surface area
         # Note: Visibility to spacecraft is still computed via rejection sampling
         gAΩ = pi * sr * region.aoi_frac * aoi_area(region.aoi)
+        #gAΩ = pi * sr * aoi_area(region.aoi)
     else
         # Otherwise we threw cosmic rays for whole moon and computed area with MC
         gAΩ = pi * sr * region_area(WholeMoonRegion())  # [km^2 sr]

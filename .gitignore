@@ -11,3 +11,6 @@
 *.zip
 /slurm/*.png
 /slurm/Data
+/slurm/*.jld2
+/slurm/*.out
+/slurm/Saved_Events_Plots/

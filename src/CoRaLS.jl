@@ -10,6 +10,7 @@ export Rmoon, random_point_on_cap, horizon_angle, random_direction, spherical_ca
 export WholeMoonRegion, CircularRegion, PolarRegion, CustomRegion, SouthPolePSR, NorthPolePSR, AllPSR, create_region, is_in_region, region_area, parse_orbit
 export FixedPlatform, CircularOrbit, SampledPositions, create_spacecraft, get_position
 export random_point_in_aoi, aoi_to_spherical_bounds, is_in_aoi, is_in_region
+export WholeMoonMare, WholeMoonHighlands, always_true
 
 # exports from spectrum.jl
 export auger_spectrum_2021, auger_spectrum_2020, auger_spectrum, sample_auger, yr, cr_spectrum, sample_power_law
@@ -33,7 +34,7 @@ export CE4Index, LunarSourceBookIndex, LSB_DivinerIndex,  CE4LPRDensity_Dong2020
 #regolith_density(CE3LPRDensity(), )
 
 # exports from surface.jl
-export NoSlope, GaussianSlope, NoRoughness, GaussianRoughness
+export NoSlope, GaussianSlope, NoRoughness, GaussianRoughness, RayleighSlope
 
 # exports from cosmic_ray.jl
 export estimate_Xmax, charge_excess_profile

@@ -83,6 +83,14 @@ SouthPolePSR = PolarRegion(SouthPoleAOI(-80), 0.0557)
 # NorthPolePSR = (prob=0.0446, area=1.2866e4km^2) -> CustomRegion((lat, lon)->(lat >= 80) && rand() < prob, area)
 NorthPolePSR = PolarRegion(NorthPoleAOI(80), 0.0446)
 
+function always_true(lat, lon)
+    return true
+end
+
+## 
+WholeMoonMare = CustomRegion(always_true, 0.162, 6.1512e6km^2)
+WholeMoonHighlands = CustomRegion(always_true, 0.8370751, 31.7522035e6km^2)
+
 # Both poles: 5.02% of area within 10 degrees of either pole is PSR (28921 km^2)
 AllPSR = CustomRegion((lat, lon)->(abs(lat) >= 80), 0.0502, 2.8921e4km^2)
 # AllPSR = [SouthPolePSR(), NorthPolePSR()]  # TODO: implement list of regions

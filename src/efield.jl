@@ -314,7 +314,7 @@ Calculate the attenuation length for radio waves in regolith at given frequencie
 # Returns
 - Array of attenuation lengths corresponding to each frequency.
 """
-function attenuation_length(ν, n, density; tanδnorm=0.00025, tand_mag=0.0005, kwargs...)
+function attenuation_length(ν, n, density; tanδnorm=0.001, tand_mag=0.0005, kwargs...)
 
     ## Note from PL: 
     ## Lab lunar sample data at room temperature has submature highland 

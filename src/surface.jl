@@ -43,6 +43,16 @@ struct GaussianSlope <: SlopeModel
     GaussianSlope(σ) = new(deg2rad(σ))
 end
 
+
+"""
+Rayleigh surface slope model.
+
+"""
+struct RayleighSlope <: SlopeModel
+    σ::Float64 # in radians
+    RayleighSlope(σ) = new(deg2rad(σ))
+end
+
 """
     random_surface(slope::NoSlope, normal)
 
@@ -68,6 +78,58 @@ function random_surface_normal(slope::GaussianSlope, normal)
 
     # draw a random polar angle consistent with the slope
     theta = abs(rand(Normal(0.0, slope.σ))) # in radians
+
+    # draw an azimuthal angle uniformaly in the desired range
+    phi = rand(Uniform(0.0, 2π))
+
+    # this is the vector in the z-hat space
+    direction = spherical_to_cartesian(theta, phi, 1.0)
+
+    # we must now rotate this so that z-hat is aligned with normal
+    # we do this with an axis angle representation
+
+    # this is our z-hat vector in the original coordinate system
+    zhat = SA[0.0, 0.0, 1.0]
+
+    # construct the angle between z-hat and `normal` - already normalized
+    θ = acos(zhat ⋅ normal)
+
+    # and construct the *right-handed* axis
+    axis = normal × zhat
+
+    # have to check that axis can be properly normalized
+    if norm(axis) < 1e-6
+        # if this is true, we are in the same coordinate system
+        return direction
+    end
+
+    # otherwide, normalize, do the rotation
+    rotated = AngleAxis(-θ, (axis / norm(axis))...) * direction
+    # rotated /= norm(rotated)
+    # fix some precision issues
+
+    # check that this vector is always less than 6-sigma
+    # @toggled_assert acos(rotated ⋅ normal) < (6.0*slope.σ)
+    @toggled_assert norm(rotated) ≈ 1.0
+
+    return rotated
+end
+
+
+
+"""
+    random_surface(slope::RayleighSlope, normal)
+
+Generate a random normal vector for a surface slope that would
+originally be pointing along `normal` in the absence of roughness.
+"""
+function random_surface_normal(slope::RayleighSlope, normal)
+
+    # check that normal is accurately normalized
+    @toggled_assert norm(normal) ≈ 1.0
+
+    # draw a random polar angle consistent with the slope
+    theta = abs(rand(Rayleigh(slope.σ))) # in radians
 
     # draw an azimuthal angle uniformaly in the desired range
     phi = rand(Uniform(0.0, 2π))
