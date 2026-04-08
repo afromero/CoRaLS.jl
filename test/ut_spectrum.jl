@@ -2,7 +2,6 @@ using CoRaLS: sample_power_law
 using CoRaLS: auger_spectrum_2020 
 using CoRaLS: auger_spectrum_2021 
 using Unitful: g, cm, m, km, sr, μV, V, eV, GeV, EeV, Hz, MHz, W, K, NoUnits, yr, ustrip
-using Plots
 
 @testset verbose = true "spectrum.jl" begin
     @testset "Test auger_spectrum_2021 flux" begin
@@ -48,36 +47,6 @@ using Plots
         # 5% tolerance, some offset probably due to Jraw -> J conversion
         @test count ≈ raw_count rtol = 0.05  
     end
-
-    @testset "Test sample_power_law flux" begin
-        import Random; Random.seed!(42)
-
-        nbins = 100
-        samples = 10^6
-        bin_edges = range(1.0, 1001.0, length = nbins+1)
-        bin_centers = (bin_edges[1:end-1] .+ bin_edges[2:end]) ./ 2
-
-        ## Define the functions
-        y_inv    = ((bin_centers .^ (-1)) ./ log(1001/1)) .* samples .* (1001 - 1) ./ nbins
-        y_inv_sq = ((bin_centers .^ (-2)) .* 1001/1000)   .* samples .* (1001 - 1) ./ nbins
-
-        ## Sample from the functions and then histogam them
-        inv_sample    = sample_power_law(-1.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
-        inv_sq_sample = sample_power_law(-2.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
-        mkpath("plots/figs")
-        
-        ## Make some plots
-        p1 = histogram(ustrip.(inv_sample), bins=collect(bin_edges), yscale=:log10,
-                       label="samples", title="gamma = -1", xlabel="x", ylabel="counts")
-        savefig(p1, "plots/figs/sample_E_-1_power_law_flux.png")
-        p2 = histogram(ustrip.(inv_sq_sample), bins=collect(bin_edges), yscale=:log10,
-                       label="samples", title="gamma = -2", xlabel="x", ylabel="counts")
-        savefig(p2, "plots/figs/sample_E_-2_power_law_flux.png")
-
-        ## For now, this test just makes the plots and we'll implement a more sophisticated on later
-        @test 1 == 1
-    end
-
 
 end
 ;

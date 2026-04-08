@@ -230,8 +230,13 @@ function plot_acceptance(AΩ::Union{Acceptance, OldAcceptance}; min_count=0, ax=
             fmt="none", ecolor=colorrefl, alpha=0.5, capsize=2, elinewidth=1,
         )
 
-    ax.plot(E[didx], AΩ.dAΩ[didx] ./ km^2 ./ sr, ls="--",
-        color=colordirect, label=name*" Direct", drawstyle="steps-mid"; kwargs...)
+    if haskey(kwargs, :linestyle) || haskey(kwargs, :ls)
+        ax.plot(E[didx], AΩ.dAΩ[didx] ./ km^2 ./ sr,
+            color=colordirect, label=name*" Direct", drawstyle="steps-mid"; kwargs...)
+    else
+        ax.plot(E[didx], AΩ.dAΩ[didx] ./ km^2 ./ sr,
+            color=colordirect, label=name*" Direct", drawstyle="steps-mid", linestyle="--"; kwargs...)
+    end
     ax.errorbar(
             E[didx], AΩ.dAΩ[didx] ./ km^2 ./ sr, yerr=derr[didx],
             fmt="none", ecolor=colordirect, alpha=0.5, capsize=2, elinewidth=1,
@@ -314,7 +319,7 @@ Compute the Monte Carlo Standard Error as count or acceptance if gAΩ is given.
 
 Uses Monte Carlo Standard Error for binomial proportion: sqrt(p*(1-p)/n)
 """
-function mcse(count::Int, ntrials::Int)
+function mcse(count::Real, ntrials::Integer)
     p = count ./ ntrials
     return sqrt.(p .* (1 .- p) ./ ntrials)
 end
