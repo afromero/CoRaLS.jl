@@ -285,6 +285,34 @@ function differential_spectrum(energies, AΩ, T)
     return spectrum
 end
 
+function get_spectrum(energies, AΩ, T)
+
+    # array to store the spectrum in each bin
+    spectrum = zeros(length(AΩ))
+
+    logE = log10.(ustrip.(energies))
+    ΔlogE = mean(diff(logE))
+    #println("ΔlogE, diff(logE) ",ΔlogE, " ", diff(logE))
+    
+    @assert isapprox.(diff(logE), ΔlogE; rtol=1e-6) |> all
+
+    # loop over each bin
+    for bin = 1:(length(energies)-1)
+
+        # calculate the average of the auger spectrum in this bin
+        avg = auger_spectrum.(energies[bin])
+        
+        # calculate dN/DE using this average value of the spectrum
+        # spectrum[bin] = (T * AΩ[bin] * avg) |> (EeV^(-1))
+        #flx * 10**log10_energy_eV * AOmega * np.log(10.)* d_log_10_E * T_live
+        spectrum[bin] = (T * AΩ[bin] * avg * energies[bin] * ΔlogE * log(10.))  |> NoUnits
+
+    end
+
+    # and we are done
+    return spectrum
+end
+
 # I/O helpers
 """
     save_acceptance(A::Acceptance, filename::String)

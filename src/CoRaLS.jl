@@ -52,7 +52,7 @@ export throw_cosmicray, ScalarGeometry, VectorGeometry
 export magnitude_trigger, gaussian_trigger, rician_trigger, trigger_all
 
 # exports from acceptance.jl
-export acceptance, differential_spectrum, trials_passed, old_acceptance, save_acceptance, load_acceptance, merge_acceptance
+export acceptance, differential_spectrum, trials_passed, old_acceptance, save_acceptance, load_acceptance, merge_acceptance, get_spectrum
 
 # exports from plots.jl
 export plot_differential_spectrum, plot_incident_angles, plot_polarization_angle, plot_offaxis_angle
