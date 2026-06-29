@@ -39,17 +39,40 @@ function estimate_Xmax(Ecr)
     end
 
     # estimate the mean using a two-element linear fit
-    if lEcr <= 19.0
-        mean = 730.0g / cm^2 + ((760.0g / cm^2 - 730.0g / cm^2) / (19.0 - 18.0)) * (lEcr - 18.0)
+    ## PL NOTE: If we are using the Yushkov ICRC2019, then these are not the right equations
+    ##          Yushkov states in their proceeding that the observed rate of change for Xmax is 
+    ##          77g/cm^2 below lEcr = 18.32, and 26g/cm^2 above
+
+    ## Old Remy fit of Xmax
+    #if lEcr <= 19.0
+    #    mean = 730.0g / cm^2 + ((760.0g / cm^2 - 730.0g / cm^2) / (19.0 - 18.0)) * (lEcr - 18.0)
+    #else
+    #    mean = 760.0g / cm^2 + ((780.0g / cm^2 - 760.0g / cm^2) / (19.6 - 19.0)) * (lEcr - 19.0)
+    #end
+
+    ## This is using P. Linton's fit of Yushkov ICRC(2019) proceeding data. 
+    ## See CoRaLS elog entry 27 for presentation (https://elog.phys.hawaii.edu/elog/corals/)
+    if lEcr <= 18.32
+        mean = 730.0g / cm^2 + ((77g / cm^2)) * (lEcr - 18.0)
     else
-        mean = 760.0g / cm^2 + ((780.0g / cm^2 - 760.0g / cm^2) / (19.6 - 19.0)) * (lEcr - 19.0)
+        mean = 760.0g / cm^2 + ((26g / cm^2)) * (lEcr - 19.0)
     end
 
+    ## Old Remy fit of Xmax
     # and estimate the sigma using a similar two-piece linear fit
-    if lEcr <= 18.51
-        sigma = 59.0g / cm^2 + ((51.0g / cm^2 - 59.0g / cm^2) / (18.51 - 18.0)) * (lEcr - 18.0)
+    #if lEcr <= 18.51
+    #    sigma = 59.0g / cm^2 + ((51.0g / cm^2 - 59.0g / cm^2) / (18.51 - 18.0)) * (lEcr - 18.0)
+    #else
+    #    sigma = 51.0g / cm^2 + ((25.0g / cm^2 - 51.0g / cm^2) / (19.71 - 18.51)) * (lEcr - 18.51)
+    #end
+
+    ## and estimate the sigma using a similar two-piece linear fit
+    ## This is using P. Linton's fit of Yushkov ICRC(2019) proceeding data. 
+    ## See CoRaLS elog entry 27 for presentation (https://elog.phys.hawaii.edu/elog/corals/)
+    if lEcr <= 18.32
+        sigma = 106.262g / cm^2 - 2.68g / cm^2 * (lEcr)
     else
-        sigma = 51.0g / cm^2 + ((25.0g / cm^2 - 51.0g / cm^2) / (19.71 - 18.51)) * (lEcr - 18.51)
+        sigma = 459.423g / cm^2 - 21.958g / cm^2 * (lEcr)
     end
 
     # return the mean and a positive standard deviation
