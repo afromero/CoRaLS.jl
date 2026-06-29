@@ -10,7 +10,7 @@ export Rmoon, random_point_on_cap, horizon_angle, random_direction, spherical_ca
 export WholeMoonRegion, CircularRegion, PolarRegion, CustomRegion, SouthPolePSR, NorthPolePSR, AllPSR, create_region, is_in_region, region_area, parse_orbit
 export FixedPlatform, CircularOrbit, SampledPositions, create_spacecraft, get_position
 export random_point_in_aoi, aoi_to_spherical_bounds, is_in_aoi, is_in_region
-export WholeMoonMare, WholeMoonHighlands, always_true
+export WholeMoonMare, WholeMoonHighlands, always_true, make_psr_criteria, CustomAOIRegion, PSRRegion, NonPSRRegion, PSR_NRegion, make_north_psr_criteria, Non_PSR_NRegion, MareRegion, make_mare_criteria, HighlandRegion, make_highland_criteria
 
 # exports from spectrum.jl
 export auger_spectrum_2021, auger_spectrum_2020, auger_spectrum, sample_auger, yr, cr_spectrum, sample_power_law

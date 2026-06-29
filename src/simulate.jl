@@ -149,6 +149,13 @@ function throw_cosmicray(Ecr, trigger, region, spacecraft; simple_area=false, kw
         if !is_visible(surface, SC)
             return (NotVisible, NotVisible)
         end
+    elseif !simple_area && region isa AOIRegion
+        surface = random_point_in_aoi(region.aoi)
+        if !is_visible(surface, SC)
+            return (NotVisible, NotVisible)
+        elseif !is_in_region(surface, region)
+            return (NotInRegion, NotInRegion)
+        end
     else
         surface = random_point_on_sphere(Rmoon)
         if !is_visible(surface, SC)

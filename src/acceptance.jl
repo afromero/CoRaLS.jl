@@ -110,6 +110,11 @@ function acceptance(ntrials::Int, nbins::Int;
         # Note: Visibility to spacecraft is still computed via rejection sampling
         gAΩ = pi * sr * region.aoi_frac * aoi_area(region.aoi)
         #gAΩ = pi * sr * aoi_area(region.aoi)
+    elseif !simple_area && region isa AOIRegion
+        # We threw CRs only in the AOIRegion, so A_collected is that AOI surface area
+        # Note: Visibility to spacecraft is still computed via rejection sampling
+        gAΩ = pi * sr * region_area(region)
+        #gAΩ = pi * sr * aoi_area(region.aoi)
     else
         # Otherwise we threw cosmic rays for whole moon and computed area with MC
         gAΩ = pi * sr * region_area(WholeMoonRegion())  # [km^2 sr]

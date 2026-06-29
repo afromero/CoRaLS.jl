@@ -5,6 +5,7 @@ using ToggleableAsserts
 using Parameters
 using Unitful
 import Unitful: km
+using NPZ
 
 const Rmoon = 1737.4km
 
@@ -25,6 +26,9 @@ end
 
 struct NorthPoleAOI <: Pole
     min_lat::Float64
+end
+
+struct WholeMoonAOI <: Pole
 end
 
 struct Circle <: AreaOfInterest
@@ -70,6 +74,13 @@ struct CustomRegion <: AbstractRegion
     surface_area::typeof(1.0km^2)  # [km^2]
 end
 
+struct CustomAOIRegion <: AOIRegion
+    criteria::Function
+    surface_area::typeof(1.0km^2)  # [km^2]
+    aoi::Pole
+    aoi_frac::Float64
+end
+
 # PSR Definitions from the following paper giving PSR area in south and north.
 # Ref: Mazarico, E., G. A. Neumann, D. E. Smith, M. T. Zuber, and M. H. Torrence (2011) “Illumination conditions of the lunar polar regions using LOLA topography.” Icarus, 211, no. 2: 1066-1081. https://doi.org/10.1016/j.icarus.2010.10.030 
 # Chance of hitting PSR = area of PSR / area 10 of spherical cap 10 degrees from pole (equiprobable for C.R. to hit anywhere on pole)
@@ -90,6 +101,263 @@ end
 ## 
 WholeMoonMare = CustomRegion(always_true, 0.162, 6.1512e6km^2)
 WholeMoonHighlands = CustomRegion(always_true, 0.8370751, 31.7522035e6km^2)
+
+
+function make_north_psr_criteria(;
+    npzfile = joinpath(@__DIR__, "..", "data",
+                       "LPSR_75N_120M_201608_psr_lut_for_julia.npz")
+)
+
+    mask_packed = npzread(npzfile, ["mask_packed"])["mask_packed"]
+    height      = only(npzread(npzfile, ["height"])["height"])
+    width       = only(npzread(npzfile, ["width"])["width"])
+    affine      = npzread(npzfile, ["affine"])["affine"]
+    R           = only(npzread(npzfile, ["radius_m"])["radius_m"])
+
+    dx = affine[1]
+    x0 = affine[3]
+    dy = affine[5]
+    y0 = affine[6]
+
+    function criteria(lat, lon)
+
+        # lat/lon are degrees
+        if lat < -90.0 || lat > 90.0
+            @warn "North PSR criteria expected latitude in degrees" lat lon maxlog=10
+            return false
+        end
+
+        # only keep north-pole cap, 80N to 90N
+        lat < 80.0 && return false
+
+        lon = mod(lon, 360.0)
+
+        lat_rad = deg2rad(lat)
+        lon_rad = deg2rad(lon)
+
+        # North-pole stereographic projection
+        ρ = 2R * tan((π/2 - lat_rad) / 2)
+
+        if !isfinite(ρ)
+            return false
+        end
+
+        x = ρ * sin(lon_rad)
+        y = ρ * cos(lon_rad)
+
+        if !isfinite(x) || !isfinite(y)
+            return false
+        end
+
+        col = floor(Int, (x - x0) / dx) + 1
+        row = floor(Int, (y0 - y) / abs(dy)) + 1
+
+        if row < 1 || row > height || col < 1 || col > width
+            return false
+        end
+
+        byte_col = (col - 1) ÷ 8 + 1
+        bit_idx  = (col - 1) % 8
+
+        byte = mask_packed[row, byte_col]
+
+        return ((byte >> bit_idx) & 0x01) == 0x01
+    end
+
+    return criteria
+end
+
+function make_psr_criteria(;
+    npzfile = joinpath(@__DIR__, "..", "data",
+                       "LPSR_80S_20MPP_ADJ_psr_lut_for_julia.npz")
+)
+
+    mask_packed = npzread(npzfile, ["mask_packed"])["mask_packed"]
+    height      = only(npzread(npzfile, ["height"])["height"])
+    width       = only(npzread(npzfile, ["width"])["width"])
+    affine      = npzread(npzfile, ["affine"])["affine"]
+    R           = only(npzread(npzfile, ["radius_m"])["radius_m"])
+
+    # Affine transform parameters
+    dx = affine[1]
+    x0 = affine[3]
+    dy = affine[5]
+    y0 = affine[6]
+
+    function criteria(lat, lon)
+
+        # Expect latitude/longitude in degrees
+        if lat < -90.0 || lat > 90.0
+            @warn "PSR criteria expected latitude in degrees" lat lon maxlog=10
+            return false
+        end
+
+        # TIFF only covers poleward of 80°S
+        lat > -80.0 && return false
+
+        lon = mod(lon, 360.0)
+
+        lat_rad = deg2rad(lat)
+        lon_rad = deg2rad(lon)
+
+        # South-pole stereographic projection
+        ρ = 2R * tan((π/2 + lat_rad) / 2)
+
+        if !isfinite(ρ)
+            return false
+        end
+
+        x = ρ * sin(lon_rad)
+        y = -ρ * cos(lon_rad)
+
+        if !isfinite(x) || !isfinite(y)
+            return false
+        end
+
+        # Convert projected coordinates to raster indices
+        col = floor(Int, (x - x0) / dx) + 1
+        row = floor(Int, (y0 - y) / abs(dy)) + 1
+
+        # Outside raster
+        if row < 1 || row > height || col < 1 || col > width
+            return false
+        end
+
+        # Unpack bit-packed mask
+        byte_col = (col - 1) ÷ 8 + 1
+        bit_idx  = (col - 1) % 8
+
+        byte = mask_packed[row, byte_col]
+
+        return ((byte >> bit_idx) & 0x01) == 0x01
+    end
+
+    return criteria
+end
+
+function make_mare_criteria(;
+    npzfile = joinpath(@__DIR__, "..", "data",
+                       "LROC_GLOBAL_MARE_360_mare_lut_0p05deg.npz")
+)
+    mask_packed = npzread(npzfile, ["mask_packed"])["mask_packed"]
+    height      = only(npzread(npzfile, ["height"])["height"])
+    width       = only(npzread(npzfile, ["width"])["width"])
+
+    lat_min = only(npzread(npzfile, ["lat_min"])["lat_min"])
+    lat_max = only(npzread(npzfile, ["lat_max"])["lat_max"])
+    lon_min = only(npzread(npzfile, ["lon_min"])["lon_min"])
+    lon_max = only(npzread(npzfile, ["lon_max"])["lon_max"])
+
+    dlat = only(npzread(npzfile, ["dlat"])["dlat"])
+    dlon = only(npzread(npzfile, ["dlon"])["dlon"])
+
+    function criteria(lat, lon)
+        # lat/lon are degrees
+        if lat < min(lat_min, lat_max) || lat > max(lat_min, lat_max)
+            return false
+        end
+
+        lon = mod(lon, 360.0)
+
+        if lon < lon_min || lon >= lon_max
+            return false
+        end
+
+        # dlat is negative, so use lat_max as the top row
+        row = floor(Int, (lat_max - lat) / abs(dlat)) + 1
+        col = floor(Int, (lon - lon_min) / dlon) + 1
+
+        if row < 1 || row > height || col < 1 || col > width
+            return false
+        end
+
+        byte_col = (col - 1) ÷ 8 + 1
+        bit_idx  = (col - 1) % 8
+        byte = mask_packed[row, byte_col]
+
+        return ((byte >> bit_idx) & 0x01) == 0x01
+    end
+
+    return criteria
+end
+
+function make_highland_criteria(;
+    npzfile = joinpath(@__DIR__, "..", "data", "global_not_mare_not_psr_lut_0p05deg.npz")
+)
+    mask_packed = npzread(npzfile, ["mask_packed"])["mask_packed"]
+    height      = only(npzread(npzfile, ["height"])["height"])
+    width       = only(npzread(npzfile, ["width"])["width"])
+
+    lat_min = only(npzread(npzfile, ["lat_min"])["lat_min"])
+    lat_max = only(npzread(npzfile, ["lat_max"])["lat_max"])
+    lon_min = only(npzread(npzfile, ["lon_min"])["lon_min"])
+    lon_max = only(npzread(npzfile, ["lon_max"])["lon_max"])
+
+    dlat = only(npzread(npzfile, ["dlat"])["dlat"])
+    dlon = only(npzread(npzfile, ["dlon"])["dlon"])
+
+    function criteria(lat, lon)
+        # lat/lon are expected in degrees
+        if !isfinite(lat) || !isfinite(lon)
+            return false
+        end
+
+        if lat < min(lat_min, lat_max) || lat > max(lat_min, lat_max)
+            return false
+        end
+
+        lon = mod(lon, 360.0)
+        if lon < lon_min || lon >= lon_max
+            return false
+        end
+
+        # Rows run north-to-south because dlat < 0.
+        row = floor(Int, (lat_max - lat) / abs(dlat)) + 1
+        col = floor(Int, (lon - lon_min) / dlon) + 1
+
+        if row < 1 || row > height || col < 1 || col > width
+            return false
+        end
+
+        # mask_packed was written with np.packbits(..., bitorder="little")
+        byte_col = (col - 1) ÷ 8 + 1
+        bit_idx  = (col - 1) % 8
+        byte = mask_packed[row, byte_col]
+
+        return ((byte >> bit_idx) & 0x01) == 0x01
+    end
+
+    return criteria
+end
+
+
+function MareRegion()
+    CustomAOIRegion(make_mare_criteria(), 37932328.09938046km^2,  WholeMoonAOI(), 1.0)
+end
+
+function HighlandRegion()
+    CustomAOIRegion(make_highland_criteria(), 37932328.09938046km^2,  WholeMoonAOI(), 1.0)
+end
+
+function PSRRegion()
+    CustomAOIRegion(make_psr_criteria(), 288138.648km^2, SouthPoleAOI(-80), 1.0)
+end
+
+function PSR_NRegion()
+    CustomAOIRegion(make_north_psr_criteria(), 288138.648km^2, NorthPoleAOI(80), 1.0)
+end
+
+function NonPSRRegion()
+    psr_criteria = make_psr_criteria()
+    non_psr_criteria = (lat, lon) -> !psr_criteria(lat, lon)
+    CustomAOIRegion(non_psr_criteria, 288138.648km^2, SouthPoleAOI(-80), 1.0)
+end
+
+function Non_PSR_NRegion()
+    psr_criteria = make_north_psr_criteria()
+    non_psr_criteria = (lat, lon) -> !psr_criteria(lat, lon)
+    CustomAOIRegion(non_psr_criteria, 288138.648km^2, NorthPoleAOI(80), 1.0)
+end
 
 # Both poles: 5.02% of area within 10 degrees of either pole is PSR (28921 km^2)
 AllPSR = CustomRegion((lat, lon)->(abs(lat) >= 80), 0.0502, 2.8921e4km^2)
@@ -145,6 +413,9 @@ function is_in_region(surface, region::AbstractRegion)
     elseif region isa CustomRegion
         lat, lon = cartesian_to_latlon(surface)
         in_region = region.criteria(lat, lon)
+    elseif region isa CustomAOIRegion
+        lat, lon = cartesian_to_latlon(surface)
+        in_region = region.criteria(lat, lon)
     else
         in_region = is_in_aoi(surface, region.aoi)
     end
@@ -183,6 +454,9 @@ function random_point_in_aoi(aoi::Pole)
     elseif aoi isa SouthPoleAOI
         theta_max = π
         theta_min = deg2rad(90 - aoi.max_lat)  # co-latitude
+    elseif aoi isa WholeMoonAOI
+        theta_max = π
+        theta_min = 0.0
     end
     theta, phi = random_angles_on_cap(theta_max; theta_min=theta_min)
     return spherical_to_cartesian(theta, phi, Rmoon)
@@ -227,6 +501,10 @@ end
 
 function region_area(region::CustomRegion)
     return region.area
+end
+
+function region_area(region::CustomAOIRegion)
+    return region.surface_area
 end
 
 # Define spacecraft types and location sampling
@@ -297,6 +575,15 @@ function get_position(spacecraft::FixedPlatform)
 end
 
 function get_position(spacecraft::CircularOrbit)
+    #alpha = 0
+    #pos = random_point_on_cicular_orbit(Rmoon + spacecraft.altitude)
+    #x, y, z = pos
+
+    #return SVector(
+    #    cos(alpha)*x + sin(alpha)*z,
+    #    y,
+    #   -sin(alpha)*x + cos(alpha)*z
+    #)
     return random_point_on_cicular_orbit(Rmoon + spacecraft.altitude)
 end
 
