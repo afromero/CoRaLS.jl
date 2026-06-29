@@ -1,5 +1,5 @@
 using DelimitedFiles
-using Unitful: Ω
+using Unitful: Ω, °, MHz
 
 """
     detector.jl
@@ -87,6 +87,9 @@ function create_antenna(fname;
 
     # we also need the total summed noise voltage
     Vntot::typeof(1.0μV) = sqrt(sum(Vn .^ 2))
+    
+    #Vntot::typeof(1.0μV) = sqrt(2*Ntrig*k_b*(60 + 0.9*85)K*Z*132.687MHz) |> μV
+    #Vntot::typeof(1.0μV) = sqrt(2*Ntrig*k_b*137K*Z*650MHz) |> μV
 
     # construct the azimuthal angles given the number of antennas
     ϕ = range(0, 2π, length=Nant + 1)[1:Nant]
@@ -94,9 +97,12 @@ function create_antenna(fname;
         # If ϕ0 is given, align all antennas along the same azimuthal direction
         ϕ = ϕ0 * ones(Nant)
     end
+
+    #θ0 = [-55°, -50°, -55°, -50°, -55°, -50°, -55°, -50°]
     
     # construct the boresight vectors for each antenna
     boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad(-θ0) * ones(Nant), ϕ, 1)
+    #boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad.(-θ0), ϕ, 1)
 
     # construct the perpendicular (i.e. H-pol) antenna axis
     Haxis = [boresight[i] × SA[0, 0, 1] for i = 1:Nant]
@@ -153,8 +159,15 @@ function create_antenna(fname;
                 ϕev = acos(clamp((Hproj / norm(Hproj)) ⋅ boresight[i], -1, 1)) |> rad2deg
 
                 # apply the off-axis antenna response at these angles
-                scale[i] *= 0.074 + (1.0 - 0.074)exp(-θev * θev / (2σθ * σθ))
-                scale[i] *= 0.062 + (1.0 - 0.062)exp(-ϕev * ϕev / (2σϕ * σϕ))
+                #scale[i] *= 0.074 + (1.0 - 0.074)exp(-θev * θev / (2σθ * σθ))
+                #scale[i] *= 0.062 + (1.0 - 0.062)exp(-ϕev * ϕev / (2σϕ * σϕ))
+
+                ## PL NOTE: My XF sims of the CoRaLS fullscale antenna seem to imply theta_ev and phi_ev were flipped
+                σϕ = 31.28
+                σθ = 29.09
+
+                scale[i] *= 0.0125 + (1.0 - 0.0125)exp(-θev * θev / (2σθ * σθ))
+                scale[i] *= 0.08395 + (1.0 - 0.08395)exp(-ϕev * ϕev / (2σϕ * σϕ))
 
             end
 
@@ -261,4 +274,4 @@ Create a model for the ANtarctic Impulsive Transient Antenna (ANITA) used in cos
 # Returns
 - A configured ANITA antenna model.
 """
-ANITA(; kwargs...) = create_antenna("ANITA_antennaFacs"; ν_min=150MHz, ν_max=800MHz, kwargs...)
+ANITA(; kwargs...) = create_antenna("ANITA_antennaFacs"; kwargs...)
