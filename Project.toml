@@ -1,7 +1,7 @@
 name = "CoRaLS"
 uuid = "9de490ff-36bf-45aa-ac77-c1e4634bf958"
 authors = ["C. J. Tai Udovicic <cjtu@hawaii.edu>", "R. Prechelt <prechelt@hawaii.edu> and contributors"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"

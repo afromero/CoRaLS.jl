@@ -23,30 +23,24 @@ julia> Pkg.add("PyCall")
 julia> Pkg.build("PyCall")
 ```
 
-5. Run the test suite to test the installation:
+5. Run the test suite to test the installation. From the CoRaLS.jl directory, run:
 
 ```bash
-julia --project=/path/to/CoRaLS.jl /path/to/CoRaLS.jl/test/runtests.jl
+julia --project=. test/runtests.jl
 ```
 
 If the tests were successful, `CoRaLS.jl` is compiled and ready to use!
 
 ## Calculating rates with CoRaLS
 
-1. Start Julia with the CoRaLS project active using the `--project` flag pointing to the CoRaLS directory (if you are in the directory use `--project=.`). For multithreaded mode, use `-t` to specify the number of threads (default is 1, "auto" chooses for you).
+Start julia in the CoRaLS.jl project (if you are in the directory use `--project=.`). For multithreaded mode, use `-t` to specify the number of threads (default is 1, "auto" chooses for you).
 
 ```bash
-julia --project=/path/to/CoRaLS.jl -t "auto"
+julia --project=. -t "auto"
 julia> using CoRaLS
 ```
 
-2. import `CoRaLS` with:
-
-```julia
-julia> using CoRaLS
-```
-
-3. Compute and plot an acceptance:
+Compute and plot an acceptance:
 
 ```julia
 julia> A = acceptance(10000, 20; region=create_region("psr:south"), spacecraft=CircularOrbit(50.0km))
@@ -67,6 +61,14 @@ To run tests:
 
 ```bash
 julia --project=. test/runtests.jl
+```
+
+Running `test/runtests.jl` also runs visual diff cleanup for plot PNGs. Files in `test/plots/test_plots` that do not have visible changes are automatically restored, and changed files are exported to a tmp comparison folder for review.
+
+To re-run only the visual diff step manually:
+
+```bash
+julia --project=. test/plots/visual_diff_test_plots.jl
 ```
 
 ## Citing

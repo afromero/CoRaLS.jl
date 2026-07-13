@@ -2,9 +2,11 @@ using CoRaLS
 using PyPlot
 using Unitful
 using Unitful: EeV, eV, km, sr, yr, ustrip
+using Random
 using Test
 
 function plot_auger_2021_comparison()
+    Random.seed!(54120001)
     # Raw counts from Table 10 of Auger 2021 paper
     J_expected = [6.431e-14, 3.191e-14, 1.577e-14, 7.643e-15, 3.650e-15, 1.739e-15, 8.32e-16, 3.90e-16, 1.85e-16, 8.87e-17, 4.14e-17, 1.9e-17, 8.47e-18, 4.17e-18, 1.929e-18, 9.041e-19, 4.294e-19, 2.167e-19, 1.226e-19, 6.82e-20, 3.79e-20, 2.07e-20, 1.04e-20, 0.53e-20, 2.49e-21, 1.25e-21, 5.99e-22, 1.95e-22, 8.1e-23, 1.8e-23, 5.5e-24, 2.9e-24]
     bin_centers = range(17.05, 20.15+0.05, length=length(J_expected))
@@ -40,13 +42,14 @@ function plot_auger_2021_comparison()
     axs.set_xlim(5e16, 5e20)
     axs.set_ylim(1e-26, 1e-12)
     axs.legend()
-    fig.savefig("$(@__DIR__)/../figs/auger21_comparison.png")
+    fig.savefig("$(@__DIR__)/test_plots/auger21_comparison.png")
 
     @test J_auger ≈ J_expected rtol = 0.025  # 13% offset
 
 end
 
 function plot_auger_2020_comparison()
+    Random.seed!(54120002)
     # Raw counts from Fig. 7 of Auger 2020 paper
     raw_count = [83143, 47500, 28657, 17843, 12435, 8715, 6050, 4111, 2620, 1691, 991, 624, 372, 156, 83, 24, 9, 6, 0, 0]
 
@@ -96,8 +99,54 @@ function plot_auger_2020_comparison()
     axs[2].set_xlim(1.5e18, 2e20)
     axs[2].set_ylim(5e-1, 1e6)
     axs[2].legend()
-    fig.savefig("$(@__DIR__)/../figs/auger20_comparison.png")
+    fig.savefig("$(@__DIR__)/test_plots/auger20_comparison.png")
 end
 
-# plot_auger_2020_comparison()
-plot_auger_2021_comparison()
+function plot_sample_power_law()
+    Random.seed!(43142432)
+
+    nbins = 100
+    samples = 10^6
+    bin_edges = range(1.0, 1001.0, length = nbins+1)
+    bin_centers = (bin_edges[1:end-1] .+ bin_edges[2:end]) ./ 2
+
+    ## Define the functions
+    y_inv    = ((bin_centers .^ (-1)) ./ log(1001/1)) .* samples .* (1001 - 1) ./ nbins
+    y_inv_sq = ((bin_centers .^ (-2)) .* 1001/1000)   .* samples .* (1001 - 1) ./ nbins
+
+    ## Sample from the functions and then histogam them
+    inv_sample    = sample_power_law(-1.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+    inv_sq_sample = sample_power_law(-2.0, samples, min_value = 1.0EeV, max_value = 1001.0EeV)
+    
+    ## Make some plots
+    fig1, ax1 = plt.subplots(1, 1, figsize=(8, 6))
+    ax1.hist(ustrip.(inv_sample), bins=collect(bin_edges), label="samples")
+    ax1.set_yscale("log")
+    ax1.set_title("gamma = -1")
+    ax1.set_xlabel("x")
+    ax1.set_ylabel("counts")
+    ax1.legend()
+    fig1.savefig("$(@__DIR__)/test_plots/sample_E_-1_power_law_flux.png")
+    close(fig1)
+
+    fig2, ax2 = plt.subplots(1, 1, figsize=(8, 6))
+    ax2.hist(ustrip.(inv_sq_sample), bins=collect(bin_edges), label="samples")
+    ax2.set_yscale("log")
+    ax2.set_title("gamma = -2")
+    ax2.set_xlabel("x")
+    ax2.set_ylabel("counts")
+    ax2.legend()
+    fig2.savefig("$(@__DIR__)/test_plots/sample_E_-2_power_law_flux.png")
+    close(fig2)
+
+    ## For now, this test just makes the plots and we'll implement a more sophisticated on later
+    @test 1 == 1
+end
+
+@testset "Test spectrum.jl plots" begin
+    plot_auger_2020_comparison()
+    plot_auger_2021_comparison()
+    plot_sample_power_law()
+
+    @test 1 == 1  # Finished with no errors
+end
