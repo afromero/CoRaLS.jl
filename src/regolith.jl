@@ -311,12 +311,12 @@ end
 
 A constant refractive index as a function of depth.
 """
-function regolith_index(::ConstantIndex, depth)
+function regolith_index(::ConstantIndex, depth; low_temp_corr_factor=0.9)
     # a sanity check for when this called outside the regolith
     depth < 0.0m && return 1.0
 
     # otherwise, return a constant index
-    return 1.7
+    return 1.78
 end
 
 """
@@ -346,7 +346,7 @@ Peter estimated a 10% reduction for lunar PSR's due to the
 ~80 K temperatures compared to the typical lunar temperatures
 of O&S, hence the low_temp_corr_factor.
 """
-function regolith_index(::StrangwayIndex, depth, low_temp_corr_factor=0.9)
+function regolith_index(::StrangwayIndex, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(StrangwayDensity(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
@@ -354,7 +354,7 @@ function regolith_index(::StrangwayIndex, depth, low_temp_corr_factor=0.9)
     return sqrt(K)
 end
 
-function regolith_index(::StrangwayIndexCB, depth, low_temp_corr_factor=0.9)
+function regolith_index(::StrangwayIndexCB, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(StrangwayDensityCB(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
@@ -362,7 +362,7 @@ function regolith_index(::StrangwayIndexCB, depth, low_temp_corr_factor=0.9)
     return sqrt(K)
 end
 
-function regolith_index(::CE3Index, depth, low_temp_corr_factor=0.9)
+function regolith_index(::CE3Index, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(CE3LPRDensity(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
@@ -370,7 +370,7 @@ function regolith_index(::CE3Index, depth, low_temp_corr_factor=0.9)
     return sqrt(K)
 end
 
-function regolith_index(::CE4Index, depth, low_temp_corr_factor=0.9)
+function regolith_index(::CE4Index, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(CE4LPRDensity_Dong2020(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
@@ -378,7 +378,7 @@ function regolith_index(::CE4Index, depth, low_temp_corr_factor=0.9)
     return sqrt(K)
 end
 
-function regolith_index(::DivinerIndex, depth, low_temp_corr_factor=0.9)
+function regolith_index(::DivinerIndex, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(DivinerRadiDensity(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
@@ -386,7 +386,7 @@ function regolith_index(::DivinerIndex, depth, low_temp_corr_factor=0.9)
     return sqrt(K)
 end
 
-function regolith_index(::LSB_DivinerIndex, depth, low_temp_corr_factor=0.9)
+function regolith_index(::LSB_DivinerIndex, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(LSB_Diviner_Density(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)
@@ -394,7 +394,7 @@ function regolith_index(::LSB_DivinerIndex, depth, low_temp_corr_factor=0.9)
     return sqrt(K)
 end
 
-function regolith_index(::LunarSourceBookIndex, depth, low_temp_corr_factor=0.9)
+function regolith_index(::LunarSourceBookIndex, depth; low_temp_corr_factor=0.9)
     # get the density at this depth - we need this in g/cm^3
     ρ = regolith_density(LunarSourceBookDensity(), depth) / (g / cm^3)
     K = low_temp_corr_factor*(1.93^ρ)

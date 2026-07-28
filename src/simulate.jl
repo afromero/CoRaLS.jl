@@ -241,6 +241,7 @@ function propagate_cosmicray(Ecr, surface, SC, trigger;
     slopemodel=GaussianSlope(7.6),
     roughnessmodel=GaussianRoughness(2.0),
     iceroughness=GaussianIceRoughness(2.0cm),
+    low_temp_corr_factor=1.0,
     kwargs...)
     # throw for a random incident cosmic ray direction in cos^2
     direction = random_direction(surface / norm(surface))
@@ -276,6 +277,7 @@ function propagate_cosmicray(Ecr, surface, SC, trigger;
         roughnessmodel=roughnessmodel,
         densitymodel=densitymodel,
         divergencemodel=divergencemodel,
+        low_temp_corr_factor=low_temp_corr_factor,
         kwargs...)
 
     # compute the solution for the "reflected" RF
@@ -287,6 +289,7 @@ function propagate_cosmicray(Ecr, surface, SC, trigger;
         iceroughness=iceroughness,
         densitymodel=densitymodel,
         divergencemodel=divergencemodel,
+        low_temp_corr_factor=low_temp_corr_factor,
         kwargs...)
 
     return direct, reflected
@@ -304,6 +307,7 @@ function compute_direct(::ScalarGeometry,
     slopemodel=NoSlope(),
     roughnessmodel=NoRoughness(),
     ν_min=150MHz, ν_max=600MHz,
+    low_temp_corr_factor=1.0,
     kwargs...)
     # Normal vector to the origin point on the surface, relative to flat spherical Moon
     flat_normal = origin / norm(origin)
@@ -328,8 +332,11 @@ function compute_direct(::ScalarGeometry,
     depth = norm(origin) - norm(Xmax)
 
     # get some needed refractive indices
-    Nsurf = regolith_index(indexmodel, 0.0m)
-    NXmax = regolith_index(indexmodel, depth)
+    #Nsurf = regolith_index(indexmodel, 0.0m)
+    #NXmax = regolith_index(indexmodel, depth)
+
+    Nsurf = regolith_index(indexmodel, 0.0m; low_temp_corr_factor = low_temp_corr_factor)
+    NXmax = regolith_index(indexmodel, depth; low_temp_corr_factor = low_temp_corr_factor)
 
     # we then calculate the incident angle at the surface consistent
     # with the refracted wave leaving the surface at θ_r
@@ -449,6 +456,7 @@ function compute_reflected(::ScalarGeometry,
     slopemodel=NoSlope(),
     roughnessmodel=NoRoughness(),
     iceroughness=NoIceRoughness(),
+    low_temp_corr_factor=1.0,
     ν_min=150MHz, ν_max=600MHz,
     kwargs...)
     # Normal vector to the origin point on the surface, relative to flat spherical Moon
@@ -474,9 +482,13 @@ function compute_reflected(::ScalarGeometry,
     depth = norm(origin) - norm(Xmax)
 
     # we need the refractive index at the surface and at the layer several times
-    Nsurf = regolith_index(indexmodel, 0.0m)
-    NXmax = regolith_index(indexmodel, depth)
-    Nrego_at_ice = regolith_index(indexmodel, ice_depth)
+    #Nsurf = regolith_index(indexmodel, 0.0m)
+    #NXmax = regolith_index(indexmodel, depth)
+    #Nrego_at_ice = regolith_index(indexmodel, ice_depth)
+
+    Nsurf = regolith_index(indexmodel, 0.0m; low_temp_corr_factor=low_temp_corr_factor)
+    NXmax = regolith_index(indexmodel, depth; low_temp_corr_factor=low_temp_corr_factor)
+    Nrego_at_ice = regolith_index(indexmodel, ice_depth; low_temp_corr_factor=low_temp_corr_factor)
     
     # we then calculate the incident angle at the surface consistent
     # with the refracted wave leaving the surface at θ_r

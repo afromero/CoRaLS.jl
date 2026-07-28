@@ -206,10 +206,10 @@ function surface_transmission(roughness::GaussianRoughness, divergencemodel, θ_
 
     # only do this near the horizon
     # if abs(θ_i - θtir) > 2.0 * roughness.σ
-    if θ_i < 0.999 * θtir
-        return (divergence_tpar(divergencemodel, θ_i, n, args...),
-            divergence_tperp(divergencemodel, θ_i, n, args...))
-    end
+    #if abs(θ_i) < 0.999 * θtir
+    #    return (divergence_tpar(divergencemodel, θ_i, n, args...),
+    #        divergence_tperp(divergencemodel, θ_i, n, args...))
+    #end
 
     # the number of samples that we throw
     N = 50
@@ -226,7 +226,7 @@ function surface_transmission(roughness::GaussianRoughness, divergencemodel, θ_
     # loop over each incident angle
     for θ in Θ
         # if we haven't TIR'd
-        if θ < θtir
+        if abs(θ) < θtir
 
             # and calculate the coefficients
             Tpar += divergence_tpar(divergencemodel, θ, n, args...)

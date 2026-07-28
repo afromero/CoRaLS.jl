@@ -52,6 +52,7 @@ function acceptance(ntrials::Int, nbins::Int;
     save_events=false,
     simple_area=false,
     savefile="",
+    savetriggered=false,
     kwargs...
     )
     # Init arrays
@@ -84,7 +85,11 @@ function acceptance(ntrials::Int, nbins::Int;
                         dcount[bin] += 1
                     end
                     # Save all events that get to payload regardless of trigger
-                    save_events && push!(devents, direct)
+                    if savetriggered
+                        save_events && direct.triggered && push!(devents, direct)
+                    else
+                        save_events && push!(devents, direct)
+                    end
                 end
                 
                 if reflected isa TrialFailed
@@ -94,7 +99,11 @@ function acceptance(ntrials::Int, nbins::Int;
                         reflected.triggered = true
                         rcount[bin] += 1
                     end
-                    save_events && push!(revents, reflected)
+                    if savetriggered
+                        save_events && reflected.triggered && push!(revents, reflected)
+                    else
+                        save_events && push!(revents, reflected)
+                    end
                 end
             end # end ntrials loop
             tries_left[bin] -= 1

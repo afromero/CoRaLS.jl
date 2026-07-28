@@ -58,6 +58,12 @@ export acceptance, differential_spectrum, trials_passed, old_acceptance, save_ac
 export plot_differential_spectrum, plot_incident_angles, plot_polarization_angle, plot_offaxis_angle
 export plot_acceptance, plot_rate_experiment, plot_event_outcomes
 
+# exports from constants.jl
+export k_b
+
+# exports from geometry.jl
+export spherical_to_cartesian
+
 # import all of our code
 include("constants.jl")
 include("utils.jl")

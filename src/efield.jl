@@ -330,9 +330,9 @@ function attenuation_length(ν, n, density; tanδnorm=0.001, tand_mag=0.0005, kw
     ## Barmatz data on Lunar simulants, highland permittivity loss goes down ~40%
     ## Magnetic highland loss didnt see any noticable change.
 
-    ## PL NOTE: From Lunar sample data, it is unknown if samples scale with density, we will assume they scale same as dielectric
+    ## PL NOTE: From Lunar sample data, it is unknown if samples scale with density
     ## In low loss limit total loss of each is ~ their sum
-    tanδ = tand_mag + (tanδnorm) * (density / (1.0g / cm^3)) |> NoUnits
+    tanδ = (tand_mag + tanδnorm) * (density / (1.0g / cm^3)) |> NoUnits
 
     # we need the wavelength for the attenuation length calculation
     λ = c_0 ./ (n .* ν)

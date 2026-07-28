@@ -575,7 +575,7 @@ function get_position(spacecraft::FixedPlatform)
 end
 
 function get_position(spacecraft::CircularOrbit)
-    #alpha = 0
+    #alpha = 5*pi/180
     #pos = random_point_on_cicular_orbit(Rmoon + spacecraft.altitude)
     #x, y, z = pos
 
