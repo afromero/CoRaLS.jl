@@ -94,6 +94,9 @@ mutable struct Direct <: AbstractSignal
     tpar::Float64 # the parallel Fresnel transmission coefficient
     tperp::Float64 # the perpendicular Fresnel transmission coefficient
     triggered::Bool # did this event trigger
+    sc_altitude::typeof(0.0km) # Altitude of spacecraft for this event in Moon centric coordinates
+    sc_θ::Float64 # Lunar-centric theta angle of spacecraft
+    sc_ϕ::Float64 # Lunar-centric phi angle of spacecraft
 end
 
 """
@@ -127,6 +130,9 @@ mutable struct Reflected <: AbstractSignal
     subpar::Float64 # the parallel Fresnel coefficient from the subsurface refl.
     subperp::Float64 # the perpendicular Fresnel coefficient from the subsurface refl.
     triggered::Bool # did this event trigger
+    sc_altitude::typeof(0.0km) # Altitude of spacecraft for this event in Moon centric coordinates
+    sc_θ::Float64 # Lunar-centric theta angle of spacecraft
+    sc_ϕ::Float64 # Lunar-centric phi angle of spacecraft
 end
 
 """
@@ -432,11 +438,12 @@ function compute_direct(::ScalarGeometry,
 
     # calculate the below horizon angle at the payload
     el = -(acos(-view ⋅ (antenna / norm(antenna))) - pi / 2.0)
+    sc_θ, sc_ϕ, sc_altitude = cartesian_to_spherical(antenna)
 
     # and construct and return the signal
     return Direct(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith),
         poltr, ν_min, 10MHz, ν_max, E .|> (μV / m / MHz), rad2deg(θpol), rad2deg(el), rad2deg(ψ),
-        depth, Drego, Dvacuum, rad2deg(θ_i), rad2deg(θ_emit), tpar, tperp, false)
+        depth, Drego, Dvacuum, rad2deg(θ_i), rad2deg(θ_emit), tpar, tperp, false, , sc_altitude, sc_θ, sc_ϕ)
 
 end
 
@@ -642,6 +649,7 @@ function compute_reflected(::ScalarGeometry,
 
     # calculate the below horizon angle at the payload
     el = -(acos(-view ⋅ (antenna / norm(antenna))) - pi / 2.0)
+    sc_θ, sc_ϕ, sc_altitude = cartesian_to_spherical(antenna)
 
     # and construct and return the signal
     return Reflected(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith),
@@ -649,7 +657,7 @@ function compute_reflected(::ScalarGeometry,
         ν_min, 10MHz, ν_max,
         E .|> (μV / m / MHz), polsub, rad2deg(θpol), rad2deg(θpolsub), rad2deg(el), rad2deg(ψ),
         depth, Drego, Dvacuum, rad2deg(θ_i), rad2deg(θ_emit), rad2deg(θ_ice),
-        tpar, tperp, rpar, rperp, subpar, subperp, false)
+        tpar, tperp, rpar, rperp, subpar, subperp, false, sc_altitude, sc_θ, sc_ϕ)
 
 end
 

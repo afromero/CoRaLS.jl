@@ -30,7 +30,7 @@ Construct an antenna-factor based antenna simulation. This function sets up the 
 function create_antenna(fname;
     skyfrac=0.03, altitude=20.0km,
     ν_min=150MHz, ν_max=800MHz,
-    σθ=39.1, σϕ=28.4, θ0=-40.0, ϕ0=-1.0,
+    σθ=29.08, σϕ=31.28, θ0=-50.0, ϕ0=-1.0,
     Nant=8, Ntrig=3, Tlna=60K, Tmoon=85K, SNR=4.0)
 
     # current LPDA design is 150-600 MHz
@@ -66,10 +66,13 @@ function create_antenna(fname;
 
     # and sum it over the angles
     Tant = sum(Tbeam, dims=1)
-
+    #println(Tant)
+    #println(Tsky .* skyfrac .+ Tmoon * moonfrac)
     # construct the system temperature
     Tsys = Tlna .+ Γ * (Tsky .* skyfrac .+ Tmoon * moonfrac)
     #Tsys = Tlna .+ Γ*Tant
+    #Tsys = Tlna .+ Γ * (79.238K * ones(length(Tsky)))
+    #println(Tsys)
 
     # the current LPDA design is nominally a 120 ohm design
     # but the antenna factors are referenced to 50 ohm so
@@ -98,10 +101,14 @@ function create_antenna(fname;
         ϕ = ϕ0 * ones(Nant)
     end
 
-    #θ0 = [-55°, -50°, -55°, -50°, -55°, -50°, -55°, -50°]
+    θ = deg2rad(-θ0) * ones(Nant)
+
+    #ϕ = deg2rad.([0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°, 360° ])
+
+    #θ = deg2rad.(-[-50°, -50°, -50°, -50°, -50°, -50°, -50°, -50°, -90°])
     
     # construct the boresight vectors for each antenna
-    boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad(-θ0) * ones(Nant), ϕ, 1)
+    boresight = spherical_to_cartesian.(π / 2.0 .+ θ, ϕ, 1)
     #boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad.(-θ0), ϕ, 1)
 
     # construct the perpendicular (i.e. H-pol) antenna axis
