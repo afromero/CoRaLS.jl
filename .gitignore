@@ -5,6 +5,7 @@
 .DS_Store
 *.cov
 *.swp
+/slurm/*
 /slurm/err
 /slurm/out
 /slurm/logs
