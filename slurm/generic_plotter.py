@@ -32,8 +32,8 @@ def parse_args():
     parser.add_argument(
         "--quantity",
         type=str,
-        default="Reflected Count",
-        choices=["Reflected Count", "Direct Count"],
+        default="ARW Reflected count",
+        choices=["Reflected Count", "Direct Count", "ARW Reflected count"],
         help="Which event rate to plot"
     )
     parser.add_argument(
@@ -88,7 +88,8 @@ def main():
     df.columns = [
         "Energy", "Altitude (km)", "Ice Depth (m)",
         "Reflected Count", "Reflected Error",
-        "Direct Count", "Direct Error"
+        "Direct Count", "Direct Error",
+        "ARW Reflected count", "ARW Reflected Error"
     ]
 
     # Sort energies for coloring
@@ -100,7 +101,7 @@ def main():
     fig, ax = plt.subplots(figsize=(10,6))
 
     # Plot per-energy lines
-    for idx, E in enumerate(energies):
+    '''for idx, E in enumerate(energies):
         sub = df[df["Energy"] == E].sort_values(xcol)
         ax.errorbar(
             np.array(sub[xcol]),
@@ -111,18 +112,18 @@ def main():
             linestyle='-',
             label=f"{E:.3f}",
             alpha=0.6,
-        )
+        )'''
 
     # Plot total
     total = df.groupby(xcol).agg({
         args.quantity: "sum",
-        args.quantity.replace("Count", "Error"): lambda errs: np.sqrt((errs**2).sum())
+        args.quantity.replace("count", "Error"): lambda errs: np.sqrt((errs**2).sum())
     }).reset_index()
 
     ax.errorbar(
         np.array(total[xcol]),
         2*np.array(total[args.quantity]),
-        yerr=2*np.array(total[args.quantity.replace("Count", "Error")]),
+        yerr=2*np.array(total[args.quantity.replace("count", "Error")]),
         color="black",
         marker="s",
         linestyle="--",
@@ -131,6 +132,9 @@ def main():
         alpha=0.7
     )
 
+    print(2*np.array(total[args.quantity]))
+    print(2*np.array(total[args.quantity.replace("count", "Error")]))
+
     ax.set_xlabel(xlabel)
     ax.set_ylabel(args.quantity)
     if args.title is not None:
@@ -138,10 +142,12 @@ def main():
     else:
         ax.set_title(f"{args.quantity} vs {xlabel}")
 
+    ax.grid()
     ax.legend(title="Energy (EeV)", ncol=3, fancybox=True, loc="best")
 
     # Add header info as a textbox in the upper right
     info_str = ntrials_line[17:-3] #info_line #+ "\n" + ntrials_line
+    print(info_str)
     #info_str = ntrials_line[25:-9] #info_line #+ "\n" + ntrials_line
     ax.text(
         0.64, 0.99,

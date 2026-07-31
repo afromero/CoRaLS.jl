@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-#SBATCH -A PAS2277
+#SBATCH -A PAS0654
 #SBATCH --job-name=accpt_array
 #SBATCH --mail-type=BEGIN,END,FAIL ## This is so you get an email of when the job starts and finishes
 #SBATCH --output=out/corals_%A_50km_%am.out
 #SBATCH --error=err/corals_%A_50km_%am.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time=14:00:00
-#SBATCH --mem=4G
+#SBATCH --time=100:30:00
+##SBATCH --partition=hugemem
+#SBATCH --mem=50G
 
 ## Example: sbatch --array=1-20 --export=ALL,ENERGY=1,ICE=5 array_altitude.sh
 ## Example: sbatch --array=1-20 --export=ALL,ALT=1,ENERGY=1,ICE=5,ANT=4,TRIG=4,ANG=-90,FREQ1=300,TEXP=7,VAR=ALT array_altitude.sh
 
-cd ~/../../../fs/scratch/PAS2277/linton93/CoRaLS_MC/
+##cd ~/../../../fs/scratch/PAS2277/linton93/CoRaLS_MC/
+cd ~/BeattyLab/
 
 ## Set the variables we read in
 
@@ -43,7 +45,9 @@ then
 
 				echo "ice=${ICE} m   energyMult=${ENERGY}   alt=$((5 * ${ALT})) km   ant=${ANT}   trig=${TRIG}   angle=${ANG} deg  freqMin=${FREQ1} MHz   TEXP=${TEXP}"
 fi
+
 # call Julia with (altitude, ice_depth, bin_start, bin_end)
 julia CoRaLS.jl/slurm/generic_acceptance.jl "$ALT" "$ENERGY" "$ICE" "$ANT" "$TRIG" "$ANG" "$FREQ1" "$TEXP" 
+#julia CoRaLS.jl/slurm/Simple_test.jl "$ALT" "$ENERGY" "$ICE" "$ANT" "$TRIG" "$ANG" "$FREQ1" "$TEXP" 
 
 #echo "Done!"

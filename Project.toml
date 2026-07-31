@@ -1,9 +1,12 @@
 name = "CoRaLS"
 uuid = "9de490ff-36bf-45aa-ac77-c1e4634bf958"
-authors = ["C. J. Tai Udovicic <cjtu@hawaii.edu>", "R. Prechelt <prechelt@hawaii.edu> and contributors"]
 version = "0.2.2"
+authors = ["C. J. Tai Udovicic <cjtu@hawaii.edu>", "R. Prechelt <prechelt@hawaii.edu> and contributors"]
 
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
@@ -25,6 +28,9 @@ ToggleableAsserts = "07ecc579-1b30-493c-b961-3180daf6e3ae"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+CSV = "0.10.16"
+Conda = "1.10.3"
+DataFrames = "1.8.1"
 Logging = "1.11.0"
 julia = "1"
 
