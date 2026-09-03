@@ -44,6 +44,10 @@ elif [[ $VAR == "ICE" ]]
 then
 
 				echo "ice=${ICE} m   energyMult=${ENERGY}   alt=$((5 * ${ALT})) km   ant=${ANT}   trig=${TRIG}   angle=${ANG} deg  freqMin=${FREQ1} MHz   TEXP=${TEXP}"
+elif [[ $VAR == "ANG" ]]
+then
+
+				echo "angle=$((-5 * ${ANG})) deg   energyMult=${ENERGY}   alt=$((5 * ${ALT})) km   ant=${ANT}   trig=${TRIG}   ice=${ICE} m  freqMin=${FREQ1} MHz   TEXP=${TEXP}"
 fi
 
 # call Julia with (altitude, ice_depth, bin_start, bin_end)

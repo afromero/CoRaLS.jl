@@ -11,6 +11,7 @@ import os
 XCOLUMNS = {
     "depth": ("Ice Depth (m)", "Ice Depth (m)"),
     "alt":   ("Altitude (km)", "Altitude (km)"),
+    "ang":   ("Angle (deg)", "Angle (deg)"),
 }
 
 def parse_args():
@@ -86,7 +87,7 @@ def main():
     dfs = [pd.read_csv(f, header=None, skiprows=6) for f in all_files]
     df = pd.concat(dfs, ignore_index=True)
     df.columns = [
-        "Energy", "Altitude (km)", "Ice Depth (m)",
+        "Energy", "Angle (deg)", "Altitude (km)", "Ice Depth (m)",
         "Reflected Count", "Reflected Error",
         "Direct Count", "Direct Error",
         "ARW Reflected count", "ARW Reflected Error"
@@ -146,7 +147,7 @@ def main():
     ax.legend(title="Energy (EeV)", ncol=3, fancybox=True, loc="best")
 
     # Add header info as a textbox in the upper right
-    info_str = ntrials_line[17:-3] #info_line #+ "\n" + ntrials_line
+    info_str = ntrials_line #info_line #+ "\n" + ntrials_line
     print(info_str)
     #info_str = ntrials_line[25:-9] #info_line #+ "\n" + ntrials_line
     ax.text(

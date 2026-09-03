@@ -24,14 +24,14 @@ energyMult = parse(Float64, ARGS[2])
 ice_depth = parse(Float64, ARGS[3])m
 antNum = parse(Int, ARGS[4])
 trigNum = parse(Int, ARGS[5])
-angle = parse(Float64, ARGS[6])
+angle = -5*parse(Float64, ARGS[6])
 freqMin = parse(Float64, ARGS[7])MHz
 ntrials = 10^parse(Int, ARGS[8])
 ENERGY1 = 0.1 * energyMult * EeV
 ENERGY2 = 100 * energyMult * EeV
 
-#df = CSV.read(joinpath(@__DIR__, "../data/Mare_Cuboid_Efield_linear_perm.csv"), DataFrame)
-df = CSV.read(joinpath(@__DIR__, "../data/allOnes.csv"), DataFrame)
+df = CSV.read(joinpath(@__DIR__, "../data/Highlands_Cuboid_Efield_linear_perm.csv"), DataFrame)
+#df = CSV.read(joinpath(@__DIR__, "../data/allOnes.csv"), DataFrame)
 satten = linear_interpolation(df[:, 1], df[:, 2])
 
 #–– Set up your run ––#
@@ -53,8 +53,8 @@ region = PSRRegion()
 #WholeMoonMare = CustomRegion(always_true, 0.162, 6.1512e6km^2)
 #region   = WholeMoonHighlands
 #region = WholeMoonMare
-#sc       = CircularOrbit(altitude)
-sc       = FixedPlatform(-80, 0, 50km)
+sc       = CircularOrbit(altitude)
+#sc       = FixedPlatform(-80, 0, 50km)
 trigger  = LPDA(Nant=antNum, Ntrig=trigNum, θ0=angle, altitude=altitude, skyfrac=0.15)
 #trigger  = ANITA(Nant=antNum, Ntrig=trigNum, θ0=angle, altitude=altitude, skyfrac=0.15)
 #trigger  = magnitude_trigger(100μV / m)
@@ -68,12 +68,12 @@ kws      = Dict(
     :min_count  => 10, # 50 -> 10
     :max_tries  => 10, # 100 -> 10
     :simple_area=> false,
-    :tand_mag=> 0.000,
-    :tanδnorm=> 0.000,
-    :slopemodel=> GaussianSlope(0),
-    :roughnessmodel=> GaussianRoughness(0),
-    :iceroughness=> GaussianIceRoughness(0.0cm),
-    :low_temp_corr_factor=> 1.0,
+    :tand_mag=> 0.00025,
+    :tanδnorm=> 0.0005,
+    :slopemodel=> GaussianSlope(7.6),
+    :roughnessmodel=> GaussianRoughness(2.0),
+    :iceroughness=> GaussianIceRoughness(2.0cm),
+    :low_temp_corr_factor=> 0.9,
     :satten=>satten,
     #:ϕ0=>pi/2
 )
@@ -94,15 +94,15 @@ A = acceptance(ntrials, nbins;
     trigger=trigger,
     ice_depth=ice_depth,
     ice_thickness=1.0m,
-    Nice=1.265, ##regolith_index(StrangwayIndex(), ice_depth), ## Peter on call (Sept. 11, 2025) said ice permittivity should be 2.2
+    Nice=1.265, ##regolith_index(StrangwayIndex(), ice_depth), ## Peter on call (Sept. 11, 2025) said ice permittivity should be 2.2 ## PL (07/31/26): From Brouet ice permittivity paper, the permittivity at densities we expect ranges (1.6-2.2)
     Nbed=regolith_index(LSB_DivinerIndex(), ice_depth), # For bedrock: use Nbed=2.56, this is based on anorthosite P. Linton uses for rocks in volume scattering sims
     kws...,
     indexmodel=LSB_DivinerIndex(), # MACHTAY try this for changing index of refraction,
     densitymodel=LSB_Diviner_Density(),
     #indexmodel=ConstantIndex(), # MACHTAY try this for changing index of refraction
-    save_events=true,
-    savetriggered=true,
-    savefile=joinpath(@__DIR__, "..", "..","..","..", "..", "..", "fs", "scratch", "PAS2277", "linton93","test_FixedPlatform-80.jld2"),
+    #save_events=true,
+    #savetriggered=true,
+    #savefile=joinpath(@__DIR__, "..", "..","..","..", "..", "..", "fs", "scratch", "PAS2277", "linton93","test_FixedPlatform-80.jld2"),
 )
 
 #–– Define MCSE ––#
@@ -129,7 +129,7 @@ println("# Run on $timestamp")
 #println("d_spectra = ", d_spectra)
 #println("d_error   = ", d_error)
 #println("alt (km), ice_depth (m), r_count, r_err, d_count, d_err")
-println("Energy (EeV), Altitude (km), Ice Depth (m), Reflected Count, Reflected Error, Direct Count, Direct Error, ARW Reflected count, ARW Reflected Error")
+println("Energy (EeV), Angle (deg), Altitude (km), Ice Depth (m), Reflected Count, Reflected Error, Direct Count, Direct Error, ARW Reflected count, ARW Reflected Error")
 for i in 1:length(r_spectra)
-    println(ustrip(A.energies[i]), ", ", ustrip(altitude), ", ", ustrip(ice_depth), ", ", r_spectra[i], ", ", r_error[i], ", ", d_spectra[i], ", ", d_error[i], ", ", test_spectra[i], ", ", test_spectra_error[i])
+    println(ustrip(A.energies[i]), ", ", ustrip(angle), ", ", ustrip(altitude), ", ", ustrip(ice_depth), ", ", r_spectra[i], ", ", r_error[i], ", ", d_spectra[i], ", ", d_error[i], ", ", test_spectra[i], ", ", test_spectra_error[i])
 end
