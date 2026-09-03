@@ -64,6 +64,9 @@ export k_b
 # exports from geometry.jl
 export spherical_to_cartesian
 
+# exports from detector_utils.jl
+export antenna_temp, ant_view, project_event_pol, best_adjacent_triplet, best_adjacent_antennas
+
 # import all of our code
 include("constants.jl")
 include("utils.jl")
@@ -81,5 +84,6 @@ include("detector.jl")
 include("acceptance.jl")
 include("surface.jl")
 include("plots.jl")
+include("detector_utils.jl")
 
 end
