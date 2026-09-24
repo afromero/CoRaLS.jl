@@ -2,58 +2,87 @@
 
 The `CoRaLS.jl` (Cosmic Ray Lunar Sounder) Monte Carlo model computes detection rates of Askaryan emission from cosmic ray interactions in lunar regolith.
 
-## Installation
+## Quick start
 
-1. [Install Julia](https://julialang.org/install/) 
-2. Install Python and the `matplotlib` package, the easiest way is with [Anaconda](https://www.anaconda.com/) (e.g. `conda list matplotlib`).
-3. Fork or clone this repository:
+CoRaLS currently requires Julia 1.11.x: its `Logging` compatibility bound does
+not resolve with Julia 1.10. You also need a Python executable that can import
+`matplotlib`; CoRaLS uses it through `PyCall`/`PyPlot`.
 
 ```sh
-git clone git@github.com:cjtu/CoRaLS.jl.git
+git clone git@github.com:afromero/CoRaLS.jl.git
+cd CoRaLS.jl
+
+# Use the Julia 1.11 executable on your system.
+PYTHON=/path/to/python \
+  /path/to/julia-1.11/bin/julia --project=. scripts/setup.jl
+
+/path/to/julia-1.11/bin/julia --project=. scripts/smoke_test.jl
 ```
 
-4. (First time only): Setup path to python/matplotlib. In the Julia REPL, supply the path to your python environment from #2 in quotes to `ENV["PYTHON"]=""` (leave blank to use system default python). Then add and build the `PyCall` package:
+For example, check Python and matplotlib before setup with:
 
-```bash
-$ julia
-
-julia> ENV["PYTHON"]=""
-julia> using Pkg
-julia> Pkg.add("PyCall")
-julia> Pkg.build("PyCall")
+```sh
+/path/to/python -c 'import sys, matplotlib; print(sys.executable, matplotlib.__version__)'
 ```
 
-5. Run the test suite to test the installation:
+`scripts/setup.jl` is safe to rerun. It resolves the project packages, builds
+`PyCall` against `PYTHON`, and precompiles CoRaLS. The smoke test executes a
+small seeded acceptance calculation; a zero acceptance is expected at this
+small sample size and is not an error.
 
-```bash
-julia --project=/path/to/CoRaLS.jl /path/to/CoRaLS.jl/test/runtests.jl
+To use a Julia REPL after setup:
+
+```sh
+/path/to/julia-1.11/bin/julia --project=. -t auto
 ```
 
-If the tests were successful, `CoRaLS.jl` is compiled and ready to use!
+```julia
+using CoRaLS
+using CoRaLS: km
+
+A = acceptance(10_000, 20;
+    region=create_region("psr:south"),
+    spacecraft=CircularOrbit(50.0km))
+plot_acceptance(A)
+```
+
+### Jupyter notebooks
+
+Install IJulia once with the same Julia 1.11 installation, then register a
+kernel that activates this project. Select **Julia (CoRaLS) 1.11** in Jupyter.
+
+```sh
+/path/to/julia-1.11/bin/julia -e 'using Pkg; Pkg.add("IJulia")'
+/path/to/julia-1.11/bin/julia -e \
+  'using IJulia; installkernel("Julia (CoRaLS)", "--project=/absolute/path/to/CoRaLS.jl")'
+```
+
+[`notebooks/generic_acceptance_diagnostic.ipynb`](notebooks/generic_acceptance_diagnostic.ipynb)
+is a small interactive acceptance diagnostic based on `slurm/generic_acceptance.jl`.
+
+### Validation and troubleshooting
+
+Run the package-aware test suite with:
+
+```sh
+/path/to/julia-1.11/bin/julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
+At the current revision, `test/ut_acceptance.jl` compares a stochastic
+acceptance calculation to the checked-in `test/ut_acceptance_test.txt` snapshot
+and reports that the reference is stale. This is a model-reference maintenance
+issue, not an installation failure; use the smoke test above to validate a new
+installation until that snapshot is regenerated.
+
+On Linux, a Conda Python with OpenSSL 3.0 can conflict with Julia plotting
+artifacts if a process imports both `PyPlot` and Julia's `Plots`. Upgrade that
+Conda environment's OpenSSL (3.3 or newer), or use a separate Python
+environment with `matplotlib`. CoRaLS itself uses `PyPlot`.
 
 ## Calculating rates with CoRaLS
 
-1. Start Julia with the CoRaLS project active using the `--project` flag pointing to the CoRaLS directory (if you are in the directory use `--project=.`). For multithreaded mode, use `-t` to specify the number of threads (default is 1, "auto" chooses for you).
-
-```bash
-julia --project=/path/to/CoRaLS.jl -t "auto"
-julia> using CoRaLS
-```
-
-2. import `CoRaLS` with:
-
-```julia
-julia> using CoRaLS
-```
-
-3. Compute and plot an acceptance:
-
-```julia
-julia> A = acceptance(10000, 20; region=create_region("psr:south"), spacecraft=CircularOrbit(50.0km))
-julia> plot_acceptance(A)
-```
-
-See full documentation online at... (coming soon)
+See the REPL example in the quick-start section. Full documentation is coming
+soon.
 
 ## Developers
 
@@ -66,7 +95,7 @@ julia --project=docs -e 'include("docs/make.jl"); using LiveServer; serve(dir="d
 To run tests:
 
 ```bash
-julia --project=. test/runtests.jl
+julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
 ## Citing

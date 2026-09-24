@@ -1,24 +1,80 @@
-# slurm
+# CoRaLS Slurm rate sweeps
 
-This directory contains scripts for submitting jobs to a slurm batch system on an HPC (specifically the Ohio Supercomputer). The goal is to be able to easily submit jobs for running many simulations in parallel with long walltimes.
+`generic_array.sh` submits array jobs which call `generic_acceptance.jl`.  The
+shell script chooses the variable for each task, and the Julia script prints a
+CSV-like rate table to the task's standard output.
 
-## Instructions
+Before the first submission on OSC, put this branch on the cluster, select
+Julia 1.11 (the exact OSC module name may vary), instantiate the project, and
+create the log directories from the project root:
 
-The main file is array_acceptance.sh . Submission to the slurm job manager looks like this: sbatch --array=<min>-<max> --export=ALL,ALT=<altitude>,ICE=<ice depth> array_acceptance.sh . 
+```bash
+module load julia/1.11
+cd "$HOME/BeattyLab/CoRaLS.jl"
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+mkdir -p slurm/out slurm/err
+```
 
-The job script will run compute_acceptance.jl , which sets up a detector and reads in the variables from the job script to calculate the acceptance at a given energy bin. The energy bin is computed by multiplying 0.5 EeV by the number in the job array (<min> does not need to be 1, but it does need to be less than <max>). Currently, the width is linear, but in the future this may be updated to create half-decade energy bins.
+The `slurm/out` and `slurm/err` directories must exist before `sbatch` is
+called, because Slurm opens those log paths before the job script starts. Submit
+from the project root as in the commands below.
 
-### Example:
+## Slope-model array
 
-The below command will submit an array of 10 jobs, each one running simulations with a payload altitude of 50 km and an ice depth of 10 m. 
-sbatch --array=1-10 --export=ALL,ALT=50,ICE=10 array_acceptance.sh
+The following submits four otherwise-identical jobs.  Array task 1--4 select
+the corresponding entries in `SLOPE_MODELS` in order:
 
-# TODO: 
+```bash
+cd "$HOME/BeattyLab/CoRaLS.jl"
+sbatch --array=1-4 \
+  --export=ALL,CORALS_PROJECT_DIR="$PWD",VAR=SLOPE,SLOPE_MODELS=no_slope:gaussian_7p6:rayleigh_5p37:data_5m,ALT=10,ENERGY=1,ICE=5,ANT=4,TRIG=4,ANG=-90,FREQ1=300,TEXP=7 \
+  slurm/generic_array.sh
+```
 
-Some work to consider adding:
+`SLOPE_MODELS` uses colons, rather than commas, so it is safe inside Slurm's
+comma-separated `--export` argument.  The canonical choices are:
 
-1. Make energy bins half-decade in width
-2. Accept ntrials as argument in job script
-3. Generalize compute_acceptance.jl to accept more parameters (ex: orbital type, trigger, frequency range, etc). For now, those are easy to change in the script.
-4. Make similar scripts for other quantities we may be interested in computing.
-5. Add plotting scripts to read outputs from the array jobs and concatenate them into a single file and plot.
+- `no_slope` — perfectly smooth surface.
+- `gaussian_0` — legacy smooth Gaussian model.
+- `gaussian_7p6` — half-normal Gaussian polar slope with 7.6° sigma.
+- `rayleigh_5p37` — Rayleigh polar slope with 5.37° scale.
+- `data_5m` — empirical 5 m/pixel distribution.
+
+`data_5m` is read from the small repository file
+`data/south_polar_5m_slope_distribution.csv`; no terrain raster is loaded by
+the jobs.  It represents an area-weighted distribution over valid 87--90°S
+terrain in the source analysis.  It is not PSR-only and does not model spatial
+correlations between events.  Each sampled slope receives an isotropic azimuth.
+
+`ALT` retains the legacy convention in `generic_acceptance.jl`: its supplied
+value is multiplied by 5 km.  Thus `ALT=10` means a 50 km trigger altitude.
+The fixed spacecraft position remains the existing `FixedPlatform(-80, 0,
+50km)` configuration.
+
+## Other existing array sweeps
+
+Set `VAR=ALT` or `VAR=ICE` to have the task ID replace that variable.  These
+older sweeps still use `gaussian_0` unless a fixed `SLOPE_MODEL` is also passed
+in the environment.  For example:
+
+```bash
+sbatch --array=1-20 \
+  --export=ALL,CORALS_PROJECT_DIR="$PWD",VAR=ALT,ENERGY=1,ICE=5,ANT=4,TRIG=4,ANG=-90,FREQ1=300,TEXP=7,SLOPE_MODEL=data_5m \
+  slurm/generic_array.sh
+```
+
+Each `generic_acceptance.jl` output row now includes the requested slope-model
+name, so results from a slope sweep can be concatenated or filtered without
+recovering the task-to-model mapping from submission metadata.
+
+Rate sweeps intentionally do not save event payloads.  This avoids a shared
+JLD2 output path being overwritten by concurrent array tasks.  If events are
+needed for a deliberate single run, set `CORALS_SAVE_EVENTS=true` and provide a
+unique `CORALS_SAVEFILE=/path/to/file.jld2` for that job.
+
+For a direct, non-array invocation, the final slope-model argument is optional;
+omitting it preserves the prior `gaussian_0` behavior:
+
+```bash
+julia --project=. slurm/generic_acceptance.jl 10 1 5 4 4 -90 300 7 data_5m
+```

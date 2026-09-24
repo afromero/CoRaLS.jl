@@ -1,8 +1,9 @@
 #!/usr/bin/env julia
 
 import Pkg
-# Activate the CoRaLS.jl project
-Pkg.activate("CoRaLS.jl")    # adjust if your script lives elsewhere
+# Activate the project relative to this script so this also works when Slurm
+# starts the job from a different directory.
+Pkg.activate(normpath(joinpath(@__DIR__, "..")))
 
 using CoRaLS
 using Unitful: km, m, sr, EeV, MHz, cm, μV, °
@@ -13,8 +14,9 @@ using DataFrames
 using Interpolations
 
 #–– Parse command-line arguments ––#
-if length(ARGS) != 8
-    println(stderr, "Usage: julia acceptance.jl <altitude_km> <ice_depth_m>")
+if length(ARGS) ∉ (8, 9)
+    println(stderr, "Usage: julia generic_acceptance.jl <altitude_index> <energy_multiplier> <ice_depth_m> <antennas> <triggers> <pointing_angle_deg> <frequency_min_MHz> <trials_exponent> [slope_model]")
+    println(stderr, "Slope models: ", join(available_slope_models(), ", "))
     exit(1)
 end
 
@@ -27,8 +29,19 @@ trigNum = parse(Int, ARGS[5])
 angle = parse(Float64, ARGS[6])
 freqMin = parse(Float64, ARGS[7])MHz
 ntrials = 10^parse(Int, ARGS[8])
+slope_model_name = length(ARGS) == 9 ? ARGS[9] : "gaussian_0"
+slope_model = slope_model_from_name(slope_model_name)
 ENERGY1 = 0.1 * energyMult * EeV
 ENERGY2 = 100 * energyMult * EeV
+
+# Array rate sweeps should not collect or overwrite large event files. To save
+# triggered events deliberately, set CORALS_SAVE_EVENTS=true and provide a
+# unique CORALS_SAVEFILE path in the Slurm submission environment.
+save_events = lowercase(get(ENV, "CORALS_SAVE_EVENTS", "false")) in ("1", "true", "yes")
+savefile = get(ENV, "CORALS_SAVEFILE", "")
+if save_events && isempty(savefile)
+    @warn "CORALS_SAVE_EVENTS is true but CORALS_SAVEFILE is empty; events will not be written."
+end
 
 #df = CSV.read(joinpath(@__DIR__, "../data/Mare_Cuboid_Efield_linear_perm.csv"), DataFrame)
 df = CSV.read(joinpath(@__DIR__, "../data/allOnes.csv"), DataFrame)
@@ -70,7 +83,7 @@ kws      = Dict(
     :simple_area=> false,
     :tand_mag=> 0.000,
     :tanδnorm=> 0.000,
-    :slopemodel=> GaussianSlope(0),
+    :slopemodel=> slope_model,
     :roughnessmodel=> GaussianRoughness(0),
     :iceroughness=> GaussianIceRoughness(0.0cm),
     :low_temp_corr_factor=> 1.0,
@@ -100,9 +113,9 @@ A = acceptance(ntrials, nbins;
     indexmodel=LSB_DivinerIndex(), # MACHTAY try this for changing index of refraction,
     densitymodel=LSB_Diviner_Density(),
     #indexmodel=ConstantIndex(), # MACHTAY try this for changing index of refraction
-    save_events=true,
-    savetriggered=true,
-    savefile=joinpath(@__DIR__, "..", "..","..","..", "..", "..", "fs", "scratch", "PAS2277", "linton93","test_FixedPlatform-80.jld2"),
+    save_events=save_events,
+    savetriggered=save_events,
+    savefile=savefile,
 )
 
 #–– Define MCSE ––#
@@ -129,7 +142,7 @@ println("# Run on $timestamp")
 #println("d_spectra = ", d_spectra)
 #println("d_error   = ", d_error)
 #println("alt (km), ice_depth (m), r_count, r_err, d_count, d_err")
-println("Energy (EeV), Altitude (km), Ice Depth (m), Reflected Count, Reflected Error, Direct Count, Direct Error, ARW Reflected count, ARW Reflected Error")
+println("Energy (EeV), Altitude (km), Ice Depth (m), Slope Model, Reflected Rate, Reflected Error, Direct Rate, Direct Error, ARW Reflected Rate, ARW Reflected Error")
 for i in 1:length(r_spectra)
-    println(ustrip(A.energies[i]), ", ", ustrip(altitude), ", ", ustrip(ice_depth), ", ", r_spectra[i], ", ", r_error[i], ", ", d_spectra[i], ", ", d_error[i], ", ", test_spectra[i], ", ", test_spectra_error[i])
+    println(ustrip(A.energies[i]), ", ", ustrip(altitude), ", ", ustrip(ice_depth), ", ", slope_model_name, ", ", r_spectra[i], ", ", r_error[i], ", ", d_spectra[i], ", ", d_error[i], ", ", test_spectra[i], ", ", test_spectra_error[i])
 end

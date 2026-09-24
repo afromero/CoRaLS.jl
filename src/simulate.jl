@@ -443,7 +443,7 @@ function compute_direct(::ScalarGeometry,
     # and construct and return the signal
     return Direct(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith),
         poltr, ν_min, 10MHz, ν_max, E .|> (μV / m / MHz), rad2deg(θpol), rad2deg(el), rad2deg(ψ),
-        depth, Drego, Dvacuum, rad2deg(θ_i), rad2deg(θ_emit), tpar, tperp, false, , sc_altitude, sc_θ, sc_ϕ)
+        depth, Drego, Dvacuum, rad2deg(θ_i), rad2deg(θ_emit), tpar, tperp, false, sc_altitude, sc_θ, sc_ϕ)
 
 end
 
@@ -660,4 +660,3 @@ function compute_reflected(::ScalarGeometry,
         tpar, tperp, rpar, rperp, subpar, subperp, false, sc_altitude, sc_θ, sc_ϕ)
 
 end
-

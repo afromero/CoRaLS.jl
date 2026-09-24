@@ -35,6 +35,7 @@ export CE4Index, LunarSourceBookIndex, LSB_DivinerIndex,  CE4LPRDensity_Dong2020
 
 # exports from surface.jl
 export NoSlope, GaussianSlope, NoRoughness, GaussianRoughness, RayleighSlope
+export DataDrivenSlope, slope_model_from_name, available_slope_models
 
 # exports from cosmic_ray.jl
 export estimate_Xmax, charge_excess_profile
