@@ -67,7 +67,7 @@ derived local files which are intentionally not stored in Git.  The generic
 notebook works without them.  To use `SouthPolarSlopeMap`,
 `ShardedSouthPolarSlopeMap`, or `ShardedSouthPolarDEMNormalMap`, follow the
 reproducible local-data instructions in
-[`analysis/slope_and_mask_diagnostics/README.md`](analysis/slope_and_mask_diagnostics/README.md).
+[`scripts/terrain/README.md`](scripts/terrain/README.md).
 
 ### Validation and troubleshooting
 

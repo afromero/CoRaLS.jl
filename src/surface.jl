@@ -147,7 +147,7 @@ function SouthPolarSlopeMap(path::AbstractString=DEFAULT_80M_SOUTH_POLAR_SLOPE_M
 )
     isfile(path) || throw(ArgumentError(
         "South-polar slope map $path is missing. Build local terrain products using " *
-        "analysis/slope_and_mask_diagnostics/README.md."
+        "scripts/terrain/README.md."
     ))
     table = npzread(path)
     required = ("slope_deg", "pixel_size_m", "origin_x_m", "origin_y_m", "radius_m")
@@ -215,7 +215,7 @@ function ShardedSouthPolarSlopeMap(
     manifest_path = joinpath(directory, "manifest.npz")
     isfile(manifest_path) || throw(ArgumentError(
         "South-polar slope shards are missing at $directory. Build local terrain products using " *
-        "analysis/slope_and_mask_diagnostics/README.md."
+        "scripts/terrain/README.md."
     ))
     table = npzread(manifest_path)
     required = (
@@ -364,7 +364,7 @@ function ShardedSouthPolarDEMNormalMap(
     manifest_path = joinpath(directory, "manifest.npz")
     isfile(manifest_path) || throw(ArgumentError(
         "South-polar DEM-normal shards are missing at $directory. Build local terrain products using " *
-        "analysis/slope_and_mask_diagnostics/README.md."
+        "scripts/terrain/README.md."
     ))
     table = npzread(manifest_path)
     required = (
