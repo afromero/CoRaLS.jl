@@ -78,6 +78,7 @@ mutable struct Direct <: AbstractSignal
     θ::Float64 # the Lunar-centric angle of the cosmic ray (deg)
     ϕ::Float64 # the Lunar-centric azimuthal angle (deg)
     θ_z::Float64 # the CR zenith angle (deg) at θ
+    slope_deg::Float64 # realized local surface-normal tilt from the spherical normal (deg)
     pol::typeof(SA[0.0, 0.0, 0.0]) # the magnitude & polarization vector at the payload
     ν_min::typeof(1.0MHz) # the minimum frequency of this e-field
     dν::typeof(1.0MHz) # the frequency bin spacing of this e-field
@@ -107,6 +108,7 @@ mutable struct Reflected <: AbstractSignal
     θ::Float64 # the Lunar-centric angle of the cosmic ray (deg)
     ϕ::Float64 # the Lunar-centric azimuthal angle (deg)
     θ_z::Float64 # the zenith angle (deg) at θ
+    slope_deg::Float64 # realized local surface-normal tilt from the spherical normal (deg)
     pol::typeof(SA[0.0, 0.0, 0.0]) # the magnitude & polarization vector
     ν_min::typeof(1.0MHz) # the minimum frequency of this e-field
     dν::typeof(1.0MHz) # the frequency bin spacing of this e-field
@@ -320,6 +322,7 @@ function compute_direct(::ScalarGeometry,
 
     # throw for a random surface normal at this location relative to surface slope distribution
     surface_normal = random_surface_normal(slopemodel, flat_normal)
+    surface_slope_deg = rad2deg(acos(clamp(flat_normal ⋅ surface_normal, -1.0, 1.0)))
 
     # the observation vector is from the surface to the spacecraft
     obs = antenna - origin
@@ -441,7 +444,7 @@ function compute_direct(::ScalarGeometry,
     sc_θ, sc_ϕ, sc_altitude = cartesian_to_spherical(antenna)
 
     # and construct and return the signal
-    return Direct(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith),
+    return Direct(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith), surface_slope_deg,
         poltr, ν_min, 10MHz, ν_max, E .|> (μV / m / MHz), rad2deg(θpol), rad2deg(el), rad2deg(ψ),
         depth, Drego, Dvacuum, rad2deg(θ_i), rad2deg(θ_emit), tpar, tperp, false, sc_altitude, sc_θ, sc_ϕ)
 
@@ -471,6 +474,7 @@ function compute_reflected(::ScalarGeometry,
 
     # throw for a random surface normal at this location relative to surface slope distribution
     surface_normal = random_surface_normal(slopemodel, flat_normal)
+    surface_slope_deg = rad2deg(acos(clamp(flat_normal ⋅ surface_normal, -1.0, 1.0)))
 
     # the observation vector is from the surface to the spacecraft
     obs = antenna - origin
@@ -652,7 +656,7 @@ function compute_reflected(::ScalarGeometry,
     sc_θ, sc_ϕ, sc_altitude = cartesian_to_spherical(antenna)
 
     # and construct and return the signal
-    return Reflected(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith),
+    return Reflected(Ecr, rad2deg(θ), rad2deg(ϕ), rad2deg(zenith), surface_slope_deg,
         poltr,
         ν_min, 10MHz, ν_max,
         E .|> (μV / m / MHz), polsub, rad2deg(θpol), rad2deg(θpolsub), rad2deg(el), rad2deg(ψ),

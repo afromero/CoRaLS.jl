@@ -15,3 +15,15 @@
 /slurm/*.jld2
 /slurm/*.out
 /slurm/Saved_Events_Plots/
+
+# Generated local terrain products.  The source GeoTIFFs and derived maps are
+# intentionally not versioned; see analysis/slope_and_mask_diagnostics/README.md.
+/data/ldsm_87s_slope_*.npz
+/data/ldsm_87s_slope_*.tif
+/data/ldsm_87s_slope_*_shards/
+/data/ldem_87s_5mpp_normal_*_shards/
+/analysis/slope_and_mask_diagnostics/figs/
+/analysis/slope_and_mask_diagnostics/*_histogram.npz
+
+# Local exploratory scratch notebook.
+/notebooks/test_slope_sampling.ipynb

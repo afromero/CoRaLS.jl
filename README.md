@@ -60,6 +60,15 @@ kernel that activates this project. Select **Julia (CoRaLS) 1.11** in Jupyter.
 [`notebooks/generic_acceptance_diagnostic.ipynb`](notebooks/generic_acceptance_diagnostic.ipynb)
 is a small interactive acceptance diagnostic based on `slurm/generic_acceptance.jl`.
 
+### Optional south-polar terrain maps
+
+The location-aware LDSM/LDEM map models use large external GeoTIFFs and
+derived local files which are intentionally not stored in Git.  The generic
+notebook works without them.  To use `SouthPolarSlopeMap`,
+`ShardedSouthPolarSlopeMap`, or `ShardedSouthPolarDEMNormalMap`, follow the
+reproducible local-data instructions in
+[`analysis/slope_and_mask_diagnostics/README.md`](analysis/slope_and_mask_diagnostics/README.md).
+
 ### Validation and troubleshooting
 
 Run the package-aware test suite with:

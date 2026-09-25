@@ -8,9 +8,11 @@ using Test
 # Random.seed!(SEED)
 
 @testset "CoRaLS.jl Tests" begin
+    include("ut_surface.jl");
     include("ut_acceptance.jl");
     include("ut_geometry.jl");
     include("ut_fresnel.jl");
     include("ut_ice.jl");    
     include("ut_spectrum.jl");
+    include("ut_slope_map.jl");
 end
