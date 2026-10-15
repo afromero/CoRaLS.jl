@@ -55,7 +55,7 @@ function estimate_Xmax(Ecr)
     if lEcr <= 18.32
         mean = 730.0g / cm^2 + ((77g / cm^2)) * (lEcr - 18.0)
     else
-        mean = 760.0g / cm^2 + ((26g / cm^2)) * (lEcr - 19.0)
+        mean = 772.32g / cm^2 + ((26g / cm^2)) * (lEcr - 19.0)
     end
 
     ## Old Remy fit of Xmax
@@ -72,7 +72,7 @@ function estimate_Xmax(Ecr)
     if lEcr <= 18.32
         sigma = 106.262g / cm^2 - 2.68g / cm^2 * (lEcr)
     else
-        sigma = 459.423g / cm^2 - 21.958g / cm^2 * (lEcr)
+        sigma = 459.435g / cm^2 - 21.958g / cm^2 * (lEcr)
     end
 
     # return the mean and a positive standard deviation

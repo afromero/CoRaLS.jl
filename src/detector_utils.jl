@@ -51,6 +51,9 @@ Returns
 -------
 An array of antenna temperatures with the same length as `ν`.
 """
+
+
+
 function antenna_temp(
     ν::AbstractVector,
     alt,
@@ -66,7 +69,7 @@ function antenna_temp(
     θ_floor::Real = 0.0125,
     ϕ_floor::Real = 0.08395,
     response_is_field::Bool = true,
-    nsurf = sqrt(3.0),
+    nsurf = sqrt(2.0),
 )
 
     # ------------------------------------------------------------
@@ -124,15 +127,16 @@ function antenna_temp(
             )
         )
 
-    # Apparent angular radius of the Moon as seen by the spacecraft.
-    α_moon = asin(
-        ustrip(
-            uconvert(
-                Unitful.NoUnits,
-                lunar_radius / spacecraft_radius,
-            )
+    # Dimensionless spacecraft radius / lunar radius.
+    r_ratio = ustrip(
+        uconvert(
+            Unitful.NoUnits,
+            spacecraft_radius / lunar_radius,
         )
     )
+
+    # Apparent angular radius of the Moon as seen by the spacecraft.
+    α_moon = asin(1 / r_ratio)
 
     cos_α_moon = cos(α_moon)
 
@@ -181,8 +185,13 @@ function antenna_temp(
     Δθ = π / nθ
     Δϕ = 2π / nϕ
 
-    beam_on_moon = 0.0
+    # Direct sky contribution.
     beam_on_sky = 0.0
+
+    # Lunar contributions are separated because R varies with
+    # incidence angle across the visible lunar disk.
+    moon_emission_weight = 0.0
+    moon_reflection_weight = 0.0
 
     for iθ in 1:nθ
 
@@ -244,35 +253,111 @@ function antenna_temp(
 
             beam_response = Bθ * Bϕ
 
-            # Antenna temperature must be weighted by power response.
-            # Set response_is_field=true only if Bθ and Bϕ describe
-            # electric-field amplitudes instead of power.
+            # Antenna temperature must use power response.
             if response_is_field
                 beam_response = beam_response^2
             end
 
-            # Solid-angle element for elevation/azimuth coordinates:
+            # Solid-angle element:
             #
             # dΩ = cos(θ) dθ dϕ
-            # It is cosine because we are using -pi/2 ro pi/2 for elevation instead of 0 to pi
             dΩ = cosθ * Δθ * Δϕ
 
             weight = beam_response * dΩ
 
-            # A direction sees the Moon when its angular separation
-            # from nadir is less than the apparent lunar radius.
-            sees_moon =
-                dot(direction, nadir) >= cos_α_moon
+            # Angular separation from nadir.
+            cosψ = clamp(
+                dot(direction, nadir),
+                -1.0,
+                1.0,
+            )
+
+            # Does this line of sight intersect the Moon?
+            sees_moon = cosψ >= cos_α_moon
 
             if sees_moon
-                beam_on_moon += weight
+
+                # ------------------------------------------------
+                # Local lunar incidence angle
+                # ------------------------------------------------
+                #
+                # If ψ is the angular separation from nadir:
+                #
+                # sin(θ_i) = (r_sc / R_moon) sin(ψ)
+                #
+                # θ_i = 0 at disk center
+                # θ_i = π/2 at the lunar limb.
+
+                sin2ψ = max(
+                    0.0,
+                    1.0 - cosψ^2,
+                )
+
+                sin2θi = clamp(
+                    r_ratio^2 * sin2ψ,
+                    0.0,
+                    1.0,
+                )
+
+                sinθi = sqrt(sin2θi)
+                cosθi = sqrt(1.0 - sin2θi)
+
+                # ------------------------------------------------
+                # Snell's law
+                # ------------------------------------------------
+                #
+                # Outside index = 1
+                # Lunar surface index = nsurf
+
+                sinθt = sinθi / nsurf
+                cosθt = sqrt(1.0 - sinθt^2)
+
+                # ------------------------------------------------
+                # Fresnel amplitude reflection coefficients
+                # ------------------------------------------------
+
+                rs =
+                    (cosθi - nsurf * cosθt) /
+                    (cosθi + nsurf * cosθt)
+
+                rp =
+                    (nsurf * cosθi - cosθt) /
+                    (nsurf * cosθi + cosθt)
+
+                # Power reflection coefficients.
+                Rs = abs2(rs)
+                Rp = abs2(rp)
+
+                # Galactic and lunar thermal emission are assumed
+                # unpolarized here.
+                R = (Rs + Rp) / 2
+
+                # Kirchhoff's law for an opaque smooth surface:
+                #
+                # emissivity = 1 - reflectivity
+
+                moon_emission_weight +=
+                    weight * (1.0 - R)
+
+                moon_reflection_weight +=
+                    weight * R
+
             else
+
                 beam_on_sky += weight
+
             end
         end
     end
 
-    total_beam = beam_on_moon + beam_on_sky
+    # ------------------------------------------------------------
+    # Normalize by total antenna beam
+    # ------------------------------------------------------------
+
+    total_beam =
+        beam_on_sky +
+        moon_emission_weight +
+        moon_reflection_weight
 
     total_beam > 0 ||
         throw(
@@ -281,27 +366,36 @@ function antenna_temp(
             )
         )
 
-    # Normalize the beam fractions.
-    f_moon = beam_on_moon / total_beam
-    f_sky = beam_on_sky / total_beam
-
     # ------------------------------------------------------------
     # Calculate antenna temperature at every frequency
     # ------------------------------------------------------------
 
     Tant = similar(Tsky)
 
-    ## Calculate power fraction that will be reflected off lunar surface
-    R = abs2((nsurf - 1)/(nsurf + 1))
-
     for i in eachindex(ν, Tsky)
+
         Tant[i] =
-            f_moon * ((1-R)*T_moon + R*Tsky[i]) +
-            f_sky * Tsky[i]
+            (
+                # Lunar thermal emission
+                moon_emission_weight * T_moon +
+
+                # Galactic/extragalactic emission reflected by Moon
+                moon_reflection_weight * Tsky[i] +
+
+                # Sky directly visible to antenna
+                beam_on_sky * Tsky[i]
+            ) / total_beam
+
     end
 
     return Tant
 end
+
+
+
+
+
+
 
 
 """

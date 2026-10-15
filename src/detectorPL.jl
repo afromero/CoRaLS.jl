@@ -38,7 +38,7 @@ function create_antenna(fname;
     ν_ant = ν_min:10MHz:ν_max
 
     # the antenna-receiver matching
-    Γ = 0.9
+    Γ = 0.9142
 
     Tant = antenna_temp(
     ν_ant,
@@ -83,7 +83,8 @@ function create_antenna(fname;
 
     #θ0 = [-55°, -50°, -55°, -50°, -55°, -50°, -55°, -50°]
     
-    # construct the boresight vectors for each antenna
+    # construct the boresight vectors for each antenna in antenna local coordinates
+    # Since the event geometry saves elevation angle of the antenna we can use theta_0
     boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad(-θ0) * ones(Nant), ϕ, 1)
     #boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad.(-θ0), ϕ, 1)
 
@@ -163,7 +164,7 @@ function create_antenna(fname;
                 # the angle between `Hproj` and boresight is the azimuth angle
                 ϕev = acos(clamp((Hproj / norm(Hproj)) ⋅ boresight[i], -1, 1)) |> rad2deg
 
-
+                ## Take the electric field, along with event.pol, and construct the electric field vectors projected onto the H and V acis of the antenna
                 EH, EV, _, _, _ = project_event_pol(Ef, event.pol, R, Haxis[i], Vaxis[i])
                 # apply the off-axis antenna response at these angles
                 #scale[i] *= 0.074 + (1.0 - 0.074)exp(-θev * θev / (2σθ * σθ))
@@ -182,13 +183,16 @@ function create_antenna(fname;
                 scale_H[i] *= 0.08395 + (1.0 - 0.08395)exp(-θev * θev / (2σϕ * σϕ))
 
                 ## Determine the voltage on vertical and horizontal RF lines
+                ## The antenna factor was determined using XFdtd simulations of the antenna
+                ## referenced to 50 Ohms
                 V_V[:, i] .= EV.*scale_V[i] ./ AF
                 V_H[:, i] .= EH.*scale_H[i] ./ AF
 
                 ## When you form the LCP-RCP basis on a purely linear signal
                 ## you get equal power in LCP RCP. Subtracting them will
                 ## give an additional factor of 2, as it is analagous
-                ## to summing twice the number of antennas
+                ## to summing twice the number of antennas, hence factor of 2.
+                ## |LCP| or |RCP| = sqrt(|V_H|^2 + |V_V|^2)/sqrt(2)
                 V_CP[:, i] .= 2*hypot.(V_H[i], V_V[i]) / sqrt(2)
 
             end
