@@ -31,7 +31,7 @@ function create_antenna(fname;
     skyfrac=0.03, altitude=20.0km,
     ν_min=150MHz, ν_max=800MHz,
     σθ=29.08, σϕ=31.28, θ0=-50.0, ϕ0=-1.0,
-    Nant=8, Ntrig=3, Tlna=60K, Tmoon=85K, SNR=4.0)
+    Nant=8, Ntrig=3, Tlna=100K, Tmoon=85K, SNR=4.0)
 
     # current LPDA design is 150-600 MHz
     # ANITA horns are 100-800 MHz

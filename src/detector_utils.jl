@@ -546,26 +546,41 @@ project the electric-field spectral density onto an antenna's H and V axes.
 Returns a named tuple containing `EH`, `EV`, `Hproj`, `Vproj`, and
 `pol_local`.
 """
+
+
+
 function project_event_pol(
     Ef::AbstractVector,
     pol::AbstractVector,
     rotation::AbstractMatrix,
     Haxis::AbstractVector,
     Vaxis::AbstractVector,
+    view::AbstractVector,
 )
-    # Rotate the polarization vector from lunar-centric Cartesian
-    # coordinates into spacecraft-local coordinates.
     pol_local = rotation * SVector{3}(pol)
 
-    # Normalize the antenna polarization axes.
-    Ĥ = normalize(SVector{3}(Haxis))
-    V̂ = normalize(SVector{3}(Vaxis))
+    s = normalize(SVector{3}(view))
 
-    # Signed polarization projection coefficients.
-    Hproj = dot(pol_local, Ĥ)
-    Vproj = dot(pol_local, V̂)
+    H0 = normalize(SVector{3}(Haxis))
+    V0 = normalize(SVector{3}(Vaxis))
 
-    # Project the scalar electric-field spectrum onto H and V.
+    # Project antenna axes into the plane transverse
+    # to the incoming wave
+    Htrans = H0 - dot(H0, s) * s
+    Vtrans = V0 - dot(V0, s) * s
+
+    # The transverse-axis approximation is undefined
+    # if the arrival direction aligns with an antenna axis
+    if norm(Htrans) < 1e-10 || norm(Vtrans) < 1e-10
+        error("Degenerate transverse polarization axis")
+    end
+
+    Hco = normalize(Htrans)
+    Vco = normalize(Vtrans)
+
+    Hproj = dot(pol_local, Hco)
+    Vproj = dot(pol_local, Vco)
+
     EH = Ef .* Hproj
     EV = Ef .* Vproj
 

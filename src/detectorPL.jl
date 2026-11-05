@@ -165,7 +165,7 @@ function create_antenna(fname;
                 ϕev = acos(clamp((Hproj / norm(Hproj)) ⋅ boresight[i], -1, 1)) |> rad2deg
 
                 ## Take the electric field, along with event.pol, and construct the electric field vectors projected onto the H and V acis of the antenna
-                EH, EV, _, _, _ = project_event_pol(Ef, event.pol, R, Haxis[i], Vaxis[i])
+                EH, EV, _, _, _ = project_event_pol(Ef, event.pol, R, Haxis[i], Vaxis[i], view)
                 # apply the off-axis antenna response at these angles
                 #scale[i] *= 0.074 + (1.0 - 0.074)exp(-θev * θev / (2σθ * σθ))
                 #scale[i] *= 0.062 + (1.0 - 0.062)exp(-ϕev * ϕev / (2σϕ * σϕ))
@@ -193,7 +193,7 @@ function create_antenna(fname;
                 ## give an additional factor of 2, as it is analagous
                 ## to summing twice the number of antennas, hence factor of 2.
                 ## |LCP| or |RCP| = sqrt(|V_H|^2 + |V_V|^2)/sqrt(2)
-                V_CP[:, i] .= 2*hypot.(V_H[i], V_V[i]) / sqrt(2)
+                V_CP[:, i] .= 2*hypot.(V_H[:, i], V_V[:, i]) / sqrt(2)
 
             end
 
@@ -262,7 +262,7 @@ function create_antenna(fname;
                     ϕev = acos(clamp((Hproj / norm(Hproj)) ⋅ boresight[i], -1, 1)) |> rad2deg
 
 
-                    EH, EV, _, _, _ = project_event_pol(Ef, event.polsub, R, Haxis[i], Vaxis[i])
+                    EH, EV, _, _, _ = project_event_pol(Ef, event.polsub, R, Haxis[i], Vaxis[i], view)
                     # apply the off-axis antenna response at these angles
                     #scale[i] *= 0.074 + (1.0 - 0.074)exp(-θev * θev / (2σθ * σθ))
                     #scale[i] *= 0.062 + (1.0 - 0.062)exp(-ϕev * ϕev / (2σϕ * σϕ))
@@ -279,11 +279,23 @@ function create_antenna(fname;
                     scale_H[i] *= 0.0125 + (1.0 - 0.0125)exp(-ϕev * ϕev / (2σθ * σθ))
                     scale_H[i] *= 0.08395 + (1.0 - 0.08395)exp(-θev * θev / (2σϕ * σϕ))
 
+                    #p = R * SVector{3}(event.pol)
+                    #p = p / norm(p)
+
+                    #geom_factor = hypot(
+                    #    dot(p, Haxis[i]),
+                    #    dot(p, Vaxis[i])
+                    #)
+
+                    #println("Antenna $i")
+                    #println("  Geometric projection: ", geom_factor)
+                    #println("  Gaussian H response:  ", scale_H[i])
+                    #println("  Gaussian V response:  ", scale_V[i])
                     ## Determine the voltage on vertical and horizontal RF lines
                     V_V[:, i] .= EV.*scale_V[i] ./ AF
                     V_H[:, i] .= EH.*scale_H[i] ./ AF
 
-                    V_CP[:, i] .= 2*hypot.(V_H[i], V_V[i]) / sqrt(2)
+                    V_CP[:, i] .= 2*hypot.(V_H[:, i], V_V[:, i]) / sqrt(2)
 
                 end
 
