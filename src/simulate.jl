@@ -36,7 +36,7 @@ This script implements various functions and types for simulating cosmic ray eve
 """
 An enum for possible reasons why the a cosmic ray trial failed.
 """
-@enum TrialFailed TIR = 1 XmaxAfterIce = 2 NoXmax = 3 Upgoing = 4 NotVisible = 5 NotInRegion = 6
+@enum TrialFailed TIR = 1 XmaxAfterIce = 2 NoXmax = 3 Upgoing = 4 NotVisible = 5 NotInRegion = 6 BackFacingFacet = 7
 
 """
 An enum for possible event geometries (i.e. direct or reflected)
@@ -69,6 +69,15 @@ struct ScalarGeometry <: GeometryImplementation end
 Abstract type for simulated signals, both direct and reflected.
 """
 abstract type AbstractSignal end
+
+"""
+    is_backfacing_facet(surface_normal, view)
+
+Return whether the payload direction `view` lies below the local tangent plane
+of `surface_normal`. This is a geometric visibility loss caused by a tilted
+facet, distinct from a Fresnel critical-angle/TIR condition.
+"""
+is_backfacing_facet(surface_normal, view) = (surface_normal ⋅ view) < 0.0
 
 """
 The information stored for a direct RF detection.
@@ -316,12 +325,16 @@ function compute_direct(::ScalarGeometry,
     roughnessmodel=NoRoughness(),
     ν_min=150MHz, ν_max=600MHz,
     low_temp_corr_factor=1.0,
+    surface_normal_override=nothing,
+    reject_backfacing=true,
     kwargs...)
     # Normal vector to the origin point on the surface, relative to flat spherical Moon
     flat_normal = origin / norm(origin)
 
     # throw for a random surface normal at this location relative to surface slope distribution
-    surface_normal = random_surface_normal(slopemodel, flat_normal)
+    surface_normal = isnothing(surface_normal_override) ?
+        random_surface_normal(slopemodel, flat_normal) :
+        surface_normal_override / norm(surface_normal_override)
     surface_slope_deg = rad2deg(acos(clamp(flat_normal ⋅ surface_normal, -1.0, 1.0)))
 
     # the observation vector is from the surface to the spacecraft
@@ -332,10 +345,11 @@ function compute_direct(::ScalarGeometry,
 
     # the exit angle at the surface to hit the space-craft
     # this is the "refracted" angle
-    θ_r = acos(view ⋅ surface_normal)
+    θ_r = acos(clamp(view ⋅ surface_normal, -1.0, 1.0))
 
-    # since we have surface roughness, we can have TIR or shadowed geometries
-    θ_r > π / 2.0 && return TIR
+    # A tilted local facet can point away from the payload. This is a local
+    # horizon/visibility loss, not Fresnel total internal reflection.
+    reject_backfacing && is_backfacing_facet(surface_normal, view) && return BackFacingFacet
 
     # calculate the depth of Xmax w.r.t to the surface
     depth = norm(origin) - norm(Xmax)
@@ -468,12 +482,16 @@ function compute_reflected(::ScalarGeometry,
     iceroughness=NoIceRoughness(),
     low_temp_corr_factor=1.0,
     ν_min=150MHz, ν_max=600MHz,
+    surface_normal_override=nothing,
+    reject_backfacing=true,
     kwargs...)
     # Normal vector to the origin point on the surface, relative to flat spherical Moon
     flat_normal = origin / norm(origin)
 
     # throw for a random surface normal at this location relative to surface slope distribution
-    surface_normal = random_surface_normal(slopemodel, flat_normal)
+    surface_normal = isnothing(surface_normal_override) ?
+        random_surface_normal(slopemodel, flat_normal) :
+        surface_normal_override / norm(surface_normal_override)
     surface_slope_deg = rad2deg(acos(clamp(flat_normal ⋅ surface_normal, -1.0, 1.0)))
 
     # the observation vector is from the surface to the spacecraft
@@ -484,10 +502,11 @@ function compute_reflected(::ScalarGeometry,
 
     # the exit angle at the surface to hit the space-craft
     # this is the "refracted" angle
-    θ_r = acos(view ⋅ surface_normal)
+    θ_r = acos(clamp(view ⋅ surface_normal, -1.0, 1.0))
 
-    # check that with a random slope, we aren't beyond TIR
-    θ_r > π / 2.0 && return TIR
+    # A tilted local facet can point away from the payload. This is a local
+    # horizon/visibility loss, not Fresnel total internal reflection.
+    reject_backfacing && is_backfacing_facet(surface_normal, view) && return BackFacingFacet
 
     # calculate the depth of Xmax w.r.t to the surface
     depth = norm(origin) - norm(Xmax)
@@ -513,7 +532,7 @@ function compute_reflected(::ScalarGeometry,
     x1 = (ice_depth - depth) * tan(θ_reg) # pre-reflected
     x2 = ice_depth * tan(θ_reg) # post-reflection
 
-    # check thate we aren't violating TIR
+    # This is the reflected path's actual critical-angle rejection.
     (x1 + x2) > (2.0 * ice_depth - depth) / sqrt(regolith_index(indexmodel, 0.0m)^2.0 - 1) && return TIR
 
     # the total distance is calculated over each step

@@ -36,7 +36,7 @@ struct GaussianIceRoughness <: IceRoughnessModel
 end
 
 """
-    ice_roughness(model::IceRoughnessModel, ν, E, θ_i)
+    ice_roughness(model::IceRoughnessModel, ν, E, θ_i[, n])
 
 Apply the specified ice roughness model to a simulated electric field. The function modifies the electric field based on the roughness characteristics of the model.
 
@@ -45,11 +45,20 @@ Apply the specified ice roughness model to a simulated electric field. The funct
 - `ν`: Frequencies of the electric field.
 - `E`: Electric field amplitudes.
 - `θ_i`: Angle of incidence at the ice surface.
+- `n`: Optional local refractive index.  It is used by roughness models that
+  depend on the wavelength in the medium, and ignored by `NoIceRoughness`.
 
 # Returns
 - Modified frequencies and electric field based on the roughness model. If the model is `NoIceRoughness`, the function returns the given frequencies and electric field. If the model is `GaussianIceRoughness`, the function modifies the electric field based on the "Diffuse reflection by rough surfaces: an introduction" by Sylvain, Pg. 671.
 """
 function ice_roughness(::NoIceRoughness, ν, E, θ_i)
+    return ν, E
+end
+
+# Reflected rays supply the local refractive index so that roughness models can
+# evaluate their in-medium wavelength.  The smooth-surface model is a no-op,
+# but it must accept the same call shape.
+function ice_roughness(::NoIceRoughness, ν, E, θ_i, n)
     return ν, E
 end
 

@@ -26,12 +26,16 @@ Construct an antenna-factor based antenna simulation. This function sets up the 
 
 # Returns
 - A function that evaluates the antenna trigger condition for a given event.
+  With `return_details=true`, it instead returns the deterministic receiver
+  voltage summary used for that trigger.  This is useful for diagnostics and
+  should not be used as a stochastic/noise realization.
 """
 function create_antenna(fname;
     skyfrac=0.03, altitude=20.0km,
     ν_min=150MHz, ν_max=800MHz,
     σθ=29.08, σϕ=31.28, θ0=-50.0, ϕ0=-1.0,
-    Nant=8, Ntrig=3, Tlna=60K, Tmoon=85K, SNR=4.0)
+    Nant=8, Ntrig=3, Tlna=60K, Tmoon=85K, SNR=4.0,
+    return_details=false)
 
     # current LPDA design is 150-600 MHz
     # ANITA horns are 100-800 MHz
@@ -111,9 +115,18 @@ function create_antenna(fname;
     boresight = spherical_to_cartesian.(π / 2.0 .+ θ, ϕ, 1)
     #boresight = spherical_to_cartesian.(π / 2.0 .+ deg2rad.(-θ0), ϕ, 1)
 
-    # construct the perpendicular (i.e. H-pol) antenna axis
-    Haxis = [boresight[i] × SA[0, 0, 1] for i = 1:Nant]
-    Haxis ./= norm.(Haxis) # make sure it is normalized
+    # Construct the perpendicular (i.e. H-pol) antenna axis.  Exactly nadir
+    # pointing is a coordinate singularity: boresight is anti-parallel to
+    # the global z axis, so their cross product vanishes.  Use its continuous
+    # azimuth-dependent limiting direction in that case.  This makes
+    # `θ0=-90` a usable spherical-nadir diagnostic rather than a NaN source.
+    Haxis = [begin
+        haxis = boresight[i] × SA[0, 0, 1]
+        if norm(haxis) < 1e-12
+            haxis = SA[sin(ϕ[i]), -cos(ϕ[i]), 0.0]
+        end
+        haxis / norm(haxis)
+    end for i = 1:Nant]
 
     # and now cross the Haxis with the boresight to get the Vaxis
     Vaxis = Haxis .× boresight
@@ -122,7 +135,8 @@ function create_antenna(fname;
     # we now construct the function that evaluates the trigger
     # use a let-block to improve performance on earlier Julia versions
     trigger = let ν_ant = ν_ant, Vntot = Vntot, AF = AF, Nant = Nant,
-        Ntrig = Ntrig, Haxis = Haxis, Vaxis = Vaxis, boresight = boresight
+        Ntrig = Ntrig, Haxis = Haxis, Vaxis = Vaxis, boresight = boresight,
+        return_details = return_details, SNR = SNR
 
         function (event::AbstractSignal)
 
@@ -228,7 +242,14 @@ function create_antenna(fname;
             # we only need to check the greater of the top
             # and bottom surface reflections
             # return max(sqrt(sum(Vf.^2)), sqrt(sum(Vfsub.^2))) > (SNR*Vntot)
-            return max(Vf, Vfsub) > (SNR * Vntot)
+            response = (
+                voltage=max(Vf, Vfsub),
+                direct_voltage=Vf,
+                subsurface_voltage=Vfsub,
+                threshold=SNR * Vntot,
+                best_antenna_scale_sum=Nsum,
+            )
+            return return_details ? response : response.voltage > response.threshold
             # return sum(Vs) > (SNR * Vntot)
             #return max(sum(Vs), sum(Vssub)) > (SNR*Vntot)
             # return max(Vf, Vfsub) > (SNR*Vntot)
