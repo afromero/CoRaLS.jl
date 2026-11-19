@@ -36,12 +36,23 @@ CORALS_OSC_ROOT="${CORALS_OSC_ROOT:-/fs/project/PAS0654/machtay_corals}"
 PROJECT_DIR="${CORALS_PROJECT_DIR:-${CORALS_OSC_ROOT}/CoRaLS.jl}"
 CORALS_JULIA_DEPOT="${CORALS_JULIA_DEPOT:-${CORALS_OSC_ROOT}/julia_depot}"
 export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-${CORALS_JULIA_DEPOT}:}"
-JULIA_BIN="${JULIA_BIN:-julia}"
 MORPH_NTRIALS="${MORPH_NTRIALS:-500000}"
 MORPH_OUTPUT_DIR="${MORPH_OUTPUT_DIR:-data/terrain_diagnostics/fixed_facet_0to10_1deg_osc}"
 MORPH_TILTS="${MORPH_TILTS:-0,1,2,3,4,5,6,7,8,9,10}"
 MORPH_THETA0S="${MORPH_THETA0S:--48}"
 MORPH_WRITE_BATCH="${MORPH_WRITE_BATCH:-5000}"
+
+# Ensure compute-node batch shells have the tools needed by the Julia recorder
+# and its Python cache/plot stages.  Explicit JULIA_BIN still takes precedence.
+if ! type module >/dev/null 2>&1 && [[ -f /etc/profile.d/modules.sh ]]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/modules.sh
+fi
+if type module >/dev/null 2>&1; then
+    [[ -n "${JULIA_BIN:-}" ]] || module load julia/1.11
+    module load python/3.12
+fi
+JULIA_BIN="${JULIA_BIN:-julia}"
 
 [[ -f "$PROJECT_DIR/Project.toml" ]] || {
     echo "CoRaLS project not found at $PROJECT_DIR. Set CORALS_PROJECT_DIR." >&2
@@ -49,6 +60,11 @@ MORPH_WRITE_BATCH="${MORPH_WRITE_BATCH:-5000}"
 }
 command -v "$JULIA_BIN" >/dev/null 2>&1 || {
     echo "Julia executable not found: $JULIA_BIN" >&2
+    echo "Load julia/1.11, or submit with JULIA_BIN=/full/path/to/julia." >&2
+    exit 2
+}
+command -v python3 >/dev/null 2>&1 || {
+    echo "python3 is not on PATH after attempting to load python/3.12." >&2
     exit 2
 }
 
