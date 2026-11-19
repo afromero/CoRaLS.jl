@@ -5,7 +5,12 @@
 .DS_Store
 *.cov
 *.swp
+__pycache__/
 /slurm/*
+!/slurm/README.md
+!/slurm/*.sh
+!/slurm/*.jl
+!/slurm/*.py
 /slurm/err
 /slurm/out
 /slurm/logs
@@ -28,3 +33,9 @@
 
 # Local exploratory scratch notebook.
 /notebooks/test_slope_sampling.ipynb
+
+# LaTeX intermediate files; the source and deliberately exported PDFs remain
+# selectable for version control.
+/docs/*.aux
+/docs/*.log
+/docs/*.out

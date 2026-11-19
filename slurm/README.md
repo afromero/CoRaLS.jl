@@ -67,6 +67,45 @@ Each `generic_acceptance.jl` output row now includes the requested slope-model
 name, so results from a slope sweep can be concatenated or filtered without
 recovering the task-to-model mapping from submission metadata.
 
+## Paired fixed-facet morphology scan
+
+`fixed_facet_morphology.sh` runs the high-statistics diagnostic for asking
+which *same* events are gained or lost as a prescribed exit-facet slope changes.
+It is not an acceptance calculation: it conditions on candidate geometries
+that are in the south-polar region, smooth-sphere visible, inward-going, and
+have an Xmax above the ice.  Every candidate is evaluated at all requested
+tilts, so the paired comparisons are meaningful event by event.
+
+The default scan uses 500,000 candidates, tilts 0 through 10 degrees in
+one-degree increments, and the nominal `-48` degree LPDA boresight.  It writes
+its raw rows incrementally, avoiding a multi-gigabyte in-memory DataFrame.
+The raw `events.csv` is still approximately 4.7 GB at the default statistics.
+
+First load Julia and instantiate this checkout once, then make Slurm's log
+directories before submission:
+
+```bash
+module load julia/1.11
+cd "$HOME/BeattyLab/CoRaLS.jl"
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+mkdir -p slurm/out slurm/err
+```
+
+For a one-million-candidate run:
+
+```bash
+sbatch --export=ALL,CORALS_PROJECT_DIR="$PWD",MORPH_NTRIALS=1000000 \
+  slurm/fixed_facet_morphology.sh
+```
+
+The resulting directory includes the raw event table, compact all-tilt and
+adjacent-transition caches, and the four aggregate distribution grids plus
+direct/reflected gained/lost plots.  To change output location, tilt list, or
+boresight without editing the job script, export `MORPH_OUTPUT_DIR`,
+`MORPH_TILTS`, or `MORPH_THETA0S`, respectively.  The `#SBATCH` resource lines
+are conservative starting values; request more wall time for a substantially
+larger run, but more CPUs do not currently accelerate this serial diagnostic.
+
 Rate sweeps intentionally do not save event payloads.  This avoids a shared
 JLD2 output path being overwritten by concurrent array tasks.  If events are
 needed for a deliberate single run, set `CORALS_SAVE_EVENTS=true` and provide a
