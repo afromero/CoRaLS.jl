@@ -53,8 +53,14 @@ corals_osc_check_python
 
 mkdir -p "$CORALS_PROJECT_DIR/slurm/out" "$CORALS_PROJECT_DIR/slurm/err"
 
-echo "Instantiating and precompiling Julia dependencies..."
-corals_osc_julia -e 'using Pkg; Pkg.instantiate(); Pkg.precompile(); Pkg.status()'
+echo "Instantiating Julia dependencies and rebuilding PyCall for $PYTHON..."
+# CoRaLS currently imports PyPlot at module load, so PyCall must be built
+# against the same module-provided Python that supplies matplotlib.  Without
+# this explicit build it can retain a prior /usr/bin/python3 configuration.
+PYTHON="$PYTHON" corals_osc_julia -e 'using Pkg; Pkg.instantiate(); Pkg.build("PyCall"); Pkg.precompile(); Pkg.status()'
+
+echo "Verifying the Julia/Python bridge..."
+corals_osc_julia -e 'using PyCall; println("PyCall uses ", PyCall.python); pyimport("matplotlib"); using CoRaLS; println("CoRaLS ready")'
 
 cat <<EOF
 

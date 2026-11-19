@@ -28,6 +28,7 @@
 #   MORPH_TILTS         comma-separated degrees (default 0,...,10)
 #   MORPH_THETA0S       comma-separated LPDA boresights (default -48)
 #   MORPH_WRITE_BATCH   candidates per CSV flush (default 5000)
+#   MORPH_SKIP_PLOTS    true/1 to skip matplotlib figures after summaries
 #   JULIA_BIN           Julia executable (default julia from module/PATH)
 
 set -euo pipefail
@@ -41,6 +42,7 @@ MORPH_OUTPUT_DIR="${MORPH_OUTPUT_DIR:-data/terrain_diagnostics/fixed_facet_0to10
 MORPH_TILTS="${MORPH_TILTS:-0,1,2,3,4,5,6,7,8,9,10}"
 MORPH_THETA0S="${MORPH_THETA0S:--48}"
 MORPH_WRITE_BATCH="${MORPH_WRITE_BATCH:-5000}"
+MORPH_SKIP_PLOTS="${MORPH_SKIP_PLOTS:-false}"
 
 # Ensure compute-node batch shells have the tools needed by the Julia recorder
 # and its Python cache/plot stages.  Explicit JULIA_BIN still takes precedence.
@@ -78,11 +80,22 @@ echo "Tilts: $MORPH_TILTS"
 echo "Boresights: $MORPH_THETA0S"
 echo "Output: $MORPH_OUTPUT_DIR"
 
-# Do not use the local convenience wrapper's default Julia path on OSC.
-bash scripts/run_fixed_facet_morphology_scan.sh \
-    --ntrials "$MORPH_NTRIALS" \
-    --output-dir "$MORPH_OUTPUT_DIR" \
-    --tilts "$MORPH_TILTS" \
-    --theta0s "$MORPH_THETA0S" \
-    --julia "$JULIA_BIN" \
+run_arguments=(
+    --ntrials "$MORPH_NTRIALS"
+    --output-dir "$MORPH_OUTPUT_DIR"
+    --tilts "$MORPH_TILTS"
+    --theta0s "$MORPH_THETA0S"
+    --julia "$JULIA_BIN"
     --write-batch-events "$MORPH_WRITE_BATCH"
+)
+case "${MORPH_SKIP_PLOTS,,}" in
+    1|true|yes) run_arguments+=(--skip-plots) ;;
+    0|false|no) ;;
+    *)
+        echo "MORPH_SKIP_PLOTS must be true/false (or 1/0); got '$MORPH_SKIP_PLOTS'." >&2
+        exit 2
+        ;;
+esac
+
+# Do not use the local convenience wrapper's default Julia path on OSC.
+bash scripts/run_fixed_facet_morphology_scan.sh "${run_arguments[@]}"

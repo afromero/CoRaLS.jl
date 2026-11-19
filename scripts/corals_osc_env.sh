@@ -97,11 +97,15 @@ corals_osc_activate() {
     export JULIA_DEPOT_PATH="${CORALS_JULIA_DEPOT}:"
     export JULIA_PROJECT="$CORALS_PROJECT_DIR"
     export JULIA_NUM_THREADS="${JULIA_NUM_THREADS:-1}"
+    # PyCall reads this variable when it is explicitly rebuilt by the setup
+    # script.  It must name the module-provided Python, not /usr/bin/python3.
+    export PYTHON="${PYTHON:-$(command -v python3)}"
 
     echo "CoRaLS project: $CORALS_PROJECT_DIR"
     echo "Julia depot:    $CORALS_JULIA_DEPOT"
     echo "Julia:          $(julia --version)"
     echo "Python:         $(python3 --version)"
+    echo "PyCall Python:  $PYTHON"
 }
 
 corals_osc_cd() {

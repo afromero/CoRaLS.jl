@@ -22,6 +22,8 @@
 #   --julia PATH       Julia executable
 #   --write-batch-events N
 #                       Candidate events retained before appending CSV rows
+#   --skip-plots        Build raw data and compact summaries, but do not invoke
+#                       matplotlib plotting scripts
 #   --skip-simulation  Rebuild summaries/figures from an existing events.csv
 #   -h, --help         Show this message
 #
@@ -47,6 +49,7 @@ tilts="0,1,2,3,4,5,6,7,8,9,10"
 theta0s="-48"
 julia_bin="${JULIA_BIN:-/home/machtay/julia-1.11.9/bin/julia}"
 write_batch_events=5000
+skip_plots=false
 skip_simulation=false
 
 usage() {
@@ -67,6 +70,8 @@ while [[ $# -gt 0 ]]; do
             julia_bin="$2"; shift 2 ;;
         --write-batch-events)
             write_batch_events="$2"; shift 2 ;;
+        --skip-plots)
+            skip_plots=true; shift ;;
         --skip-simulation)
             skip_simulation=true; shift ;;
         -h|--help)
@@ -126,27 +131,31 @@ python3 scripts/summarize_fixed_facet_slope_step1.py \
     --input "$events" \
     --output "$histograms"
 
-python3 scripts/plot_fixed_facet_slope_step1.py \
-    --histogram-input "$histograms" \
-    --pairing-summary "$pairing" \
-    --output-dir "$figures" \
-    --pairing-output "$figures/pairing.png" \
-    --layout grid \
-    --grid-cols 3
-
 python3 scripts/summarize_fixed_facet_transitions.py \
     --input "$events" \
     --output-prefix "$transitions_prefix"
 
-# Render both paths.  Each route has valid-scalar and LPDA-triggered grids for
-# every adjacent tilt pair, with lost events in red and gained events in green.
-for route in direct reflected; do
-    python3 scripts/plot_fixed_facet_transitions.py \
-        --input "${transitions_prefix}_histograms.csv" \
-        --output-dir "$figures/transitions" \
-        --route "$route" \
-        --normalization density
-done
+if [[ "$skip_plots" == false ]]; then
+    python3 scripts/plot_fixed_facet_slope_step1.py \
+        --histogram-input "$histograms" \
+        --pairing-summary "$pairing" \
+        --output-dir "$figures" \
+        --pairing-output "$figures/pairing.png" \
+        --layout grid \
+        --grid-cols 3
+
+    # Render both paths.  Each route has valid-scalar and LPDA-triggered grids for
+    # every adjacent tilt pair, with lost events in red and gained events in green.
+    for route in direct reflected; do
+        python3 scripts/plot_fixed_facet_transitions.py \
+            --input "${transitions_prefix}_histograms.csv" \
+            --output-dir "$figures/transitions" \
+            --route "$route" \
+            --normalization density
+    done
+else
+    echo "Skipping matplotlib figure generation; raw data and compact summaries were retained."
+fi
 
 echo
 echo "Complete.  Raw events: $events"
