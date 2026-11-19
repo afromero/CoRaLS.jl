@@ -10,11 +10,14 @@
 ##SBATCH --partition=hugemem
 #SBATCH --mem=50G
 
-# The default project path matches the existing OSC layout. Override it with
-# CORALS_PROJECT_DIR if the checkout is elsewhere.
+# The default project path matches Machtay's OSC layout. Override
+# CORALS_PROJECT_DIR to select a sibling worktree for a particular job.
 set -euo pipefail
 
-PROJECT_DIR="${CORALS_PROJECT_DIR:-${HOME}/BeattyLab/CoRaLS.jl}"
+CORALS_OSC_ROOT="${CORALS_OSC_ROOT:-/fs/project/PAS0654/machtay_corals}"
+PROJECT_DIR="${CORALS_PROJECT_DIR:-${CORALS_OSC_ROOT}/CoRaLS.jl}"
+CORALS_JULIA_DEPOT="${CORALS_JULIA_DEPOT:-${CORALS_OSC_ROOT}/julia_depot}"
+export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-${CORALS_JULIA_DEPOT}:}"
 JULIA_BIN="${JULIA_BIN:-julia}"
 TASK="${SLURM_ARRAY_TASK_ID:?This script must be submitted as a Slurm array.}"
 VAR="${VAR:?Set VAR to ALT, ICE, or SLOPE.}"
